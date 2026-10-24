@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scaffold Inspection Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--y:#FBCE07;--r:#DD1D21;--ink:#1c1c1c;--g:#6b6b6b;--g2:#9a9a9a;--line:#e3e3e3;--bg:#f6f6f6;--ok:#2e7d32;--warn:#e08a00;}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Jost',system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:15px}
+header{background:#fff;border-bottom:3px solid var(--y);padding:10px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+h1{font-weight:300;text-transform:uppercase;letter-spacing:.22em;color:var(--g);font-size:17px;margin:6px 0 0}
+.tr{text-align:right;font-size:12px;color:var(--g)}
+.ver{display:block;margin-bottom:3px;letter-spacing:.08em}
+.lang button{border:1px solid var(--line);background:#fff;padding:3px 8px;font:inherit;font-size:12px;cursor:pointer;color:var(--g)}
+.lang button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.who{margin-top:4px}.who a{color:var(--r);cursor:pointer;margin-left:6px}
+nav{display:flex;overflow-x:auto;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+nav button{border:0;background:none;padding:12px 14px;font:inherit;text-transform:uppercase;letter-spacing:.1em;font-size:12px;color:var(--g);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent}
+nav button.on{color:var(--ink);border-bottom-color:var(--y);font-weight:500}
+main{max-width:980px;margin:0 auto;padding:14px}
+h2{font-weight:300;text-transform:uppercase;letter-spacing:.18em;color:var(--g);font-size:14px;margin:18px 0 8px}
+.card{background:#fff;border:1px solid var(--line);padding:14px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{background:#fff;border:1px solid var(--line);padding:12px;text-align:center;cursor:pointer}
+.stat b{display:block;font-size:28px;font-weight:300}
+.stat span{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--g)}
+label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--g);margin:10px 0 3px}
+input,select,textarea{width:100%;padding:10px;border:1px solid #cfcfcf;font:inherit;background:#fff;border-radius:0}
+textarea{min-height:64px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.row2{grid-template-columns:1fr}}
+.btn{background:var(--y);border:0;padding:11px 18px;font:inherit;font-weight:500;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;color:var(--ink)}
+.btn.sec{background:#fff;border:1px solid var(--ink)}
+.btn.red{background:var(--r);color:#fff}
+.btn.sm{padding:6px 10px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:wait}
+.chip{display:inline-block;padding:2px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;border:1px solid;white-space:nowrap}
+.c-Active,.c-Approved,.c-Pass{color:var(--ok);border-color:var(--ok)}
+.c-Pending{color:var(--warn);border-color:var(--warn)}
+.c-Overdue,.c-DoNotUse,.c-Expired,.c-Fail,.c-Suspended{color:var(--r);border-color:var(--r)}
+.c-Dismantled{color:var(--g2);border-color:var(--g2)}
+.item{background:#fff;border:1px solid var(--line);padding:11px 12px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.item small{color:var(--g);display:block;margin-top:2px}
+.id{font-weight:500;letter-spacing:.04em}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.bar>*{flex:1;min-width:120px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:20;overflow:auto;padding:14px}
+.modal>div{background:#fff;max-width:640px;margin:0 auto;padding:16px;border-top:4px solid var(--y)}
+.ck{border-bottom:1px solid var(--line);padding:9px 0}
+.ck .opts{display:flex;gap:6px;margin-top:6px}
+.ck .opts label{margin:0;flex:1;text-align:center;border:1px solid #cfcfcf;padding:7px 4px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)}
+.ck input[type=radio]{display:none}
+.ck input[type=radio]:checked+span{font-weight:600}
+.ck .opts label:has(input[value=P]:checked){background:#e6f3e7;border-color:var(--ok)}
+.ck .opts label:has(input[value=F]:checked){background:#fde8e8;border-color:var(--r)}
+.ck .opts label:has(input[value=N]:checked){background:#eee}
+.ck .cm{display:none;margin-top:6px}
+.gt{font-weight:500;text-transform:uppercase;letter-spacing:.12em;font-size:12px;color:var(--g);margin:16px 0 0}
+.big{font-size:26px;font-weight:500;letter-spacing:.06em;text-align:center;padding:14px;border:2px dashed var(--ink);margin:12px 0;word-break:break-all}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;z-index:40;max-width:90%}
+.toast.err{background:var(--r)}
+.muted{color:var(--g)}.pv{max-width:100%;max-height:200px;margin-top:6px;border:1px solid var(--line)}
+img.full{width:100%}
+.login{max-width:380px;margin:40px auto}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{text-align:left;padding:6px;border-bottom:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+/* ================= CONFIG ================= */
+var API_URL = 'PASTE_APPS_SCRIPT_WEB_APP_URL_HERE';
+var VERSION = '1.0.0';
+
+/* ================= i18n ================= */
+var L = {
+en:{title:'Scaffold Inspection Register',version:'Version',login:'Log in',email:'Email',sendCode:'Send code',code:'6-digit code',verify:'Verify',keep:'Keep me logged in',logout:'Log out',
+ codeSent:'If this email is registered, a code was sent.',setupApi:'Paste the Apps Script web app URL',save:'Save',cancel:'Cancel',close:'Close',submit:'Submit',add:'Add',edit:'Edit',view:'View',loading:'Loading…',
+ t_dash:'Dashboard',t_scaf:'Scaffolds',t_new:'New scaffold',t_insp:'Inspect',t_sup:'Supervisors',t_rem:'Reminders',t_admin:'Admin',
+ Active:'Active',Pending:'Pending',Overdue:'Overdue',DoNotUse:'Do not use',Dismantled:'Dismantled',Approved:'Approved',Expired:'Expired',Suspended:'Suspended',Pass:'Pass',Fail:'Fail',
+ needsAction:'Needs action',certAlerts:'Supervisor certificates',failByC:'Failed inspections, last 90 days',none:'Nothing here.',
+ contractor:'Contractor',type:'Scaffold type',location:'Location',requestedBy:'Requested by',builtBy:'Built by (approved supervisor)',erected:'Date erected',loadClass:'Load class',loadKg:'Load (kg/m²)',notes:'Notes',
+ create:'Generate ID',idMade:'Scaffold registered. Write this ID on the tag REF.NO. line:',copy:'Copy',copied:'Copied',pendingNote:'Status: Pending. The scaffold must not be used until inspected.',
+ search:'Search ID / location',all:'All',status:'Status',nextDue:'Next inspection',lastInsp:'Last inspection',inspector:'Inspector',history:'Inspection history',inspectNow:'Inspect',dismantle:'Mark dismantled',confirmDis:'Mark this scaffold as dismantled?',
+ exportCsv:'Export CSV',kind:'Inspection type',Handover:'Handover (new)',Weekly:'Weekly',Special:'Special (after event/change)',pick:'Select scaffold',pickPh:'Type scaffold ID…',noEligible:'No scaffold selected.',
+ pass:'Pass',fail:'Fail',na:'N/A',comment:'Comment (required)',overall:'Overall comments',photoFront:'Photo: FRONT of signed tag',photoBack:'Photo: BACK of tag (inspection grid)',required:'required',answered:'answered',
+ resultPass:'Inspection saved: PASS. Next inspection',resultFail:'Inspection saved: FAIL. Scaffold set to DO NOT USE.',uploading:'Uploading photos…',viewPhoto:'View photo',front:'Front',back:'Back',
+ name:'Name',phone:'WhatsApp / phone',certType:'Certificate type',certNo:'Certificate no.',issue:'Issue date',expiry:'Expiry date',approval:'Approval',certPhoto:'Certificate photo',daysLeft:'days left',
+ addSup:'Add supervisor',importSup:'Import list',importHelp:'One per line: name, contractor, phone, email, certType, certNo, issueDate, expiryDate (YYYY-MM-DD or DD/MM/YYYY)',imported:'Imported',
+ waQueue:'WhatsApp reminders to send',waHelp:'Tap WhatsApp, then send. Tap Sent when done.',sendWa:'WhatsApp',markSent:'Sent',runNow:'Run reminders now',ranNow:'Reminders run',
+ users:'Users',role:'Role',active:'Active',addUser:'Add / edit user',settings:'Settings',interval:'Re-inspection interval (days)',contractors:'Contractors (comma)',types:'Scaffold types (T:Name|S:Name)',
+ g_F:'Foundation',g_S:'Structure',g_P:'Platform',g_E:'Edge protection',g_A:'Access',g_V:'Environment & tag',g_W:'Weekly checks'},
+id:{title:'Register Inspeksi Scaffold',version:'Versi',login:'Masuk',email:'Email',sendCode:'Kirim kode',code:'Kode 6 digit',verify:'Verifikasi',keep:'Tetap masuk',logout:'Keluar',
+ codeSent:'Jika email terdaftar, kode telah dikirim.',save:'Simpan',cancel:'Batal',close:'Tutup',submit:'Kirim',add:'Tambah',edit:'Ubah',view:'Lihat',loading:'Memuat…',
+ t_dash:'Dasbor',t_scaf:'Scaffold',t_new:'Scaffold baru',t_insp:'Inspeksi',t_sup:'Supervisor',t_rem:'Pengingat',t_admin:'Admin',
+ Active:'Aktif',Pending:'Menunggu',Overdue:'Terlambat',DoNotUse:'Dilarang dipakai',Dismantled:'Dibongkar',Approved:'Disetujui',Expired:'Kedaluwarsa',Suspended:'Ditangguhkan',Pass:'Lulus',Fail:'Gagal',
+ needsAction:'Perlu tindakan',certAlerts:'Sertifikat supervisor',failByC:'Inspeksi gagal, 90 hari terakhir',none:'Tidak ada.',
+ contractor:'Kontraktor',type:'Jenis scaffold',location:'Lokasi',requestedBy:'Diminta oleh',builtBy:'Dibangun oleh (supervisor disetujui)',erected:'Tanggal didirikan',loadClass:'Kelas beban',loadKg:'Beban (kg/m²)',notes:'Catatan',
+ create:'Buat ID',idMade:'Scaffold terdaftar. Tulis ID ini pada baris REF.NO. di tag:',copy:'Salin',copied:'Tersalin',pendingNote:'Status: Menunggu. Scaffold tidak boleh dipakai sebelum diinspeksi.',
+ search:'Cari ID / lokasi',all:'Semua',status:'Status',nextDue:'Inspeksi berikutnya',lastInsp:'Inspeksi terakhir',inspector:'Inspektur',history:'Riwayat inspeksi',inspectNow:'Inspeksi',dismantle:'Tandai dibongkar',confirmDis:'Tandai scaffold ini sebagai dibongkar?',
+ exportCsv:'Ekspor CSV',kind:'Jenis inspeksi',Handover:'Serah terima (baru)',Weekly:'Mingguan',Special:'Khusus (setelah kejadian/perubahan)',pick:'Pilih scaffold',pickPh:'Ketik ID scaffold…',noEligible:'Belum ada scaffold dipilih.',
+ pass:'Lulus',fail:'Gagal',na:'T/A',comment:'Komentar (wajib)',overall:'Komentar umum',photoFront:'Foto: DEPAN tag yang sudah ditandatangani',photoBack:'Foto: BELAKANG tag (tabel inspeksi)',required:'wajib',answered:'terjawab',
+ resultPass:'Inspeksi tersimpan: LULUS. Inspeksi berikutnya',resultFail:'Inspeksi tersimpan: GAGAL. Scaffold diset DILARANG DIPAKAI.',uploading:'Mengunggah foto…',viewPhoto:'Lihat foto',front:'Depan',back:'Belakang',
+ name:'Nama',phone:'WhatsApp / telepon',certType:'Jenis sertifikat',certNo:'No. sertifikat',issue:'Tanggal terbit',expiry:'Tanggal berakhir',approval:'Persetujuan',certPhoto:'Foto sertifikat',daysLeft:'hari lagi',
+ addSup:'Tambah supervisor',importSup:'Impor daftar',importHelp:'Satu per baris: nama, kontraktor, telepon, email, jenis sertifikat, no. sertifikat, tgl terbit, tgl berakhir',imported:'Diimpor',
+ waQueue:'Pengingat WhatsApp untuk dikirim',waHelp:'Ketuk WhatsApp, lalu kirim. Ketuk Terkirim jika selesai.',sendWa:'WhatsApp',markSent:'Terkirim',runNow:'Jalankan pengingat sekarang',ranNow:'Pengingat dijalankan',
+ users:'Pengguna',role:'Peran',active:'Aktif',addUser:'Tambah / ubah pengguna',settings:'Pengaturan',interval:'Interval inspeksi ulang (hari)',contractors:'Kontraktor (koma)',types:'Jenis scaffold (T:Nama|S:Nama)',
+ g_F:'Pondasi',g_S:'Struktur',g_P:'Platform',g_E:'Pagar pengaman',g_A:'Akses',g_V:'Lingkungan & tag',g_W:'Pemeriksaan mingguan'},
+ms:{title:'Daftar Pemeriksaan Perancah',version:'Versi',login:'Log masuk',email:'E-mel',sendCode:'Hantar kod',code:'Kod 6 digit',verify:'Sahkan',keep:'Kekalkan log masuk',logout:'Log keluar',
+ codeSent:'Jika e-mel berdaftar, kod telah dihantar.',save:'Simpan',cancel:'Batal',close:'Tutup',submit:'Hantar',add:'Tambah',edit:'Ubah',view:'Lihat',loading:'Memuatkan…',
+ t_dash:'Papan pemuka',t_scaf:'Perancah',t_new:'Perancah baharu',t_insp:'Pemeriksaan',t_sup:'Penyelia',t_rem:'Peringatan',t_admin:'Admin',
+ Active:'Aktif',Pending:'Menunggu',Overdue:'Lewat',DoNotUse:'Dilarang guna',Dismantled:'Dibongkar',Approved:'Diluluskan',Expired:'Tamat tempoh',Suspended:'Digantung',Pass:'Lulus',Fail:'Gagal',
+ needsAction:'Perlu tindakan',certAlerts:'Sijil penyelia',failByC:'Pemeriksaan gagal, 90 hari lepas',none:'Tiada.',
+ contractor:'Kontraktor',type:'Jenis perancah',location:'Lokasi',requestedBy:'Dimohon oleh',builtBy:'Dibina oleh (penyelia diluluskan)',erected:'Tarikh didirikan',loadClass:'Kelas beban',loadKg:'Beban (kg/m²)',notes:'Nota',
+ create:'Jana ID',idMade:'Perancah didaftarkan. Tulis ID ini pada baris REF.NO. di tag:',copy:'Salin',copied:'Disalin',pendingNote:'Status: Menunggu. Perancah tidak boleh digunakan sebelum diperiksa.',
+ search:'Cari ID / lokasi',all:'Semua',status:'Status',nextDue:'Pemeriksaan seterusnya',lastInsp:'Pemeriksaan terakhir',inspector:'Pemeriksa',history:'Sejarah pemeriksaan',inspectNow:'Periksa',dismantle:'Tanda dibongkar',confirmDis:'Tandakan perancah ini sebagai dibongkar?',
+ exportCsv:'Eksport CSV',kind:'Jenis pemeriksaan',Handover:'Serah terima (baharu)',Weekly:'Mingguan',Special:'Khas (selepas kejadian/perubahan)',pick:'Pilih perancah',pickPh:'Taip ID perancah…',noEligible:'Tiada perancah dipilih.',
+ pass:'Lulus',fail:'Gagal',na:'T/B',comment:'Komen (wajib)',overall:'Komen keseluruhan',photoFront:'Foto: HADAPAN tag yang ditandatangani',photoBack:'Foto: BELAKANG tag (jadual pemeriksaan)',required:'wajib',answered:'dijawab',
+ resultPass:'Pemeriksaan disimpan: LULUS. Pemeriksaan seterusnya',resultFail:'Pemeriksaan disimpan: GAGAL. Perancah ditetapkan DILARANG GUNA.',uploading:'Memuat naik foto…',viewPhoto:'Lihat foto',front:'Hadapan',back:'Belakang',
+ name:'Nama',phone:'WhatsApp / telefon',certType:'Jenis sijil',certNo:'No. sijil',issue:'Tarikh dikeluarkan',expiry:'Tarikh tamat',approval:'Kelulusan',certPhoto:'Foto sijil',daysLeft:'hari lagi',
+ addSup:'Tambah penyelia',importSup:'Import senarai',importHelp:'Satu setiap baris: nama, kontraktor, telefon, e-mel, jenis sijil, no. sijil, tarikh keluar, tarikh tamat',imported:'Diimport',
+ waQueue:'Peringatan WhatsApp untuk dihantar',waHelp:'Ketik WhatsApp, kemudian hantar. Ketik Dihantar apabila siap.',sendWa:'WhatsApp',markSent:'Dihantar',runNow:'Jalankan peringatan sekarang',ranNow:'Peringatan dijalankan',
+ users:'Pengguna',role:'Peranan',active:'Aktif',addUser:'Tambah / ubah pengguna',settings:'Tetapan',interval:'Sela pemeriksaan semula (hari)',contractors:'Kontraktor (koma)',types:'Jenis perancah (T:Nama|S:Nama)',
+ g_F:'Asas',g_S:'Struktur',g_P:'Platform',g_E:'Perlindungan tepi',g_A:'Akses',g_V:'Persekitaran & tag',g_W:'Semakan mingguan'}
+};
+var CK = {
+en:{F1:'Ground firm and level, no soft spots or standing water',F2:'Base plates / sole boards in place and properly bedded',F3:'No excavation or services undermining the base',
+ S1:'Standards plumb, correctly spaced, seated on base plates',S2:'Ledgers and transoms in place, level and fully coupled',S3:'Bracing installed as per design',S4:'Ties / anchors at required spacing and secure',S5:'Couplers tight; no damaged, bent or missing components',
+ P1:'Fully boarded; boards sound and undamaged',P2:'Boards secured against displacement; adequate overlap',P3:'Gaps between boards and to the structure within limits',P4:'Platform width suits the task; no overloading',
+ E1:'Top guardrail at correct height',E2:'Mid-rail in place',E3:'Toe boards fitted',E4:'Openings at access points protected; gates closed',
+ A1:'Safe access (ladder / stair) provided',A2:'Ladder secured and extends above the platform',A3:'Rungs / steps sound; access clear of obstructions',A4:'Intermediate landings where required',
+ V1:'Safe distance from overhead power lines / electrical hazards',V2:'Clear of vehicle / crane paths or barricaded',V3:'Area below barricaded against falling objects',V4:'Load class on tag matches actual use',V5:'Scaftag fitted, filled in, legible; supervisor details correct',
+ W1:'Base, ground and sole boards unchanged and sound',W2:'Ties, bracing and couplers intact and tight',W3:'Boards and platform intact, not overloaded, no debris',W4:'Guardrails, mid-rails and toe boards in place',W5:'Access secure, safe and clear',W6:'No unauthorised modification or removed components',W7:'Tag legible and in place; previous inspection signed',W8:'No damage from weather or impact; housekeeping good'},
+id:{F1:'Tanah kokoh dan rata, tidak ada bagian lunak atau genangan air',F2:'Base plate / alas kayu terpasang dan duduk dengan benar',F3:'Tidak ada galian atau utilitas yang melemahkan dasar',
+ S1:'Standar tegak lurus, jarak benar, duduk pada base plate',S2:'Ledger dan transom terpasang, rata dan terkunci penuh',S3:'Bracing terpasang sesuai desain',S4:'Ties / angkur pada jarak yang disyaratkan dan kuat',S5:'Coupler kencang; tidak ada komponen rusak, bengkok atau hilang',
+ P1:'Papan terpasang penuh; papan kuat dan tidak rusak',P2:'Papan terikat agar tidak bergeser; tumpang tindih cukup',P3:'Celah antar papan dan ke struktur sesuai batas',P4:'Lebar platform sesuai pekerjaan; tidak kelebihan beban',
+ E1:'Pagar atas pada ketinggian yang benar',E2:'Pagar tengah terpasang',E3:'Papan pengaman kaki (toe board) terpasang',E4:'Bukaan di titik akses terlindungi; pintu tertutup',
+ A1:'Akses aman (tangga) tersedia',A2:'Tangga terikat dan melewati platform',A3:'Anak tangga kuat; akses bebas hambatan',A4:'Platform istirahat bila diperlukan',
+ V1:'Jarak aman dari kabel listrik di atas / bahaya listrik',V2:'Bebas dari jalur kendaraan / crane atau diberi barikade',V3:'Area di bawah diberi barikade dari benda jatuh',V4:'Kelas beban pada tag sesuai penggunaan',V5:'Scaftag terpasang, terisi, terbaca; data supervisor benar',
+ W1:'Dasar, tanah dan alas tidak berubah dan kokoh',W2:'Ties, bracing dan coupler utuh dan kencang',W3:'Papan dan platform utuh, tidak kelebihan beban, bersih',W4:'Pagar atas, tengah dan toe board terpasang',W5:'Akses aman dan bebas hambatan',W6:'Tidak ada modifikasi tanpa izin atau komponen dilepas',W7:'Tag terbaca dan terpasang; inspeksi sebelumnya ditandatangani',W8:'Tidak ada kerusakan akibat cuaca atau benturan; kebersihan baik'},
+ms:{F1:'Tanah kukuh dan rata, tiada bahagian lembut atau air bertakung',F2:'Plat tapak / papan alas terpasang dan diletakkan dengan betul',F3:'Tiada korekan atau utiliti yang melemahkan tapak',
+ S1:'Piawai tegak, jarak betul, duduk pada plat tapak',S2:'Ledger dan transom terpasang, rata dan terkunci penuh',S3:'Penyokong silang dipasang mengikut reka bentuk',S4:'Ikatan / sauh pada jarak yang ditetapkan dan kukuh',S5:'Pengganding ketat; tiada komponen rosak, bengkok atau hilang',
+ P1:'Papan lengkap; papan kukuh dan tidak rosak',P2:'Papan diikat daripada beralih; pertindihan mencukupi',P3:'Jurang antara papan dan struktur dalam had',P4:'Lebar platform sesuai kerja; tiada beban berlebihan',
+ E1:'Palang atas pada ketinggian betul',E2:'Palang tengah dipasang',E3:'Papan kaki dipasang',E4:'Bukaan di titik akses dilindungi; pintu ditutup',
+ A1:'Akses selamat (tangga) disediakan',A2:'Tangga diikat dan melepasi platform',A3:'Anak tangga kukuh; akses bebas halangan',A4:'Platform rehat jika perlu',
+ V1:'Jarak selamat daripada kabel kuasa atas / bahaya elektrik',V2:'Jauh daripada laluan kenderaan / kren atau dibarikad',V3:'Kawasan bawah dibarikad daripada objek jatuh',V4:'Kelas beban pada tag sepadan penggunaan',V5:'Scaftag dipasang, diisi, jelas; butiran penyelia betul',
+ W1:'Tapak, tanah dan papan alas tidak berubah dan kukuh',W2:'Ikatan, penyokong dan pengganding utuh dan ketat',W3:'Papan dan platform utuh, tiada beban berlebihan, bersih',W4:'Palang atas, tengah dan papan kaki dipasang',W5:'Akses selamat dan bebas halangan',W6:'Tiada pengubahsuaian tanpa kebenaran atau komponen ditanggalkan',W7:'Tag jelas dan di tempatnya; pemeriksaan lepas ditandatangani',W8:'Tiada kerosakan akibat cuaca atau hentaman; kekemasan baik'}
+};
+
+/* ================= state & helpers ================= */
+var S = {lang:localStorage.getItem('sc_lang')||'en',tab:'dash',user:null,cfg:null,scf:[],sup:[],users:[],wa:[],fail:{},filter:{q:'',c:'',s:''},insp:null,token:null};
+function t(k){return (L[S.lang]&&L[S.lang][k])||L.en[k]||k;}
+function ck(k){return (CK[S.lang]&&CK[S.lang][k])||CK.en[k]||k;}
+function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function $(id){return document.getElementById(id);}
+function fd(s){if(!s)return '—';var p=String(s).split('-');return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;}
+function apiUrl(){return API_URL.indexOf('http')===0?API_URL:(localStorage.getItem('sc_api')||'');}
+function chip(s){return '<span class="chip c-'+esc(s)+'">'+esc(t(s))+'</span>';}
+function toast(m,err){var d=document.createElement('div');d.className='toast'+(err?' err':'');d.textContent=m;document.body.appendChild(d);setTimeout(function(){d.remove();},err?5000:2600);}
+function api(action,data){
+  var body=Object.assign({action:action,token:S.token},data||{});
+  return fetch(apiUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
+   .then(function(r){return r.json();})
+   .then(function(j){if(!j.ok){if(j.error==='AUTH'){logout(true);throw new Error('Session expired');}throw new Error(j.error||'Error');}return j;});
+}
+function compress(file){return new Promise(function(res,rej){var img=new Image(),u=URL.createObjectURL(file);
+  img.onload=function(){var w=img.width,h=img.height,r=Math.min(1,1400/Math.max(w,h));w=Math.round(w*r);h=Math.round(h*r);
+   var c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',0.72));};
+  img.onerror=function(){rej(new Error('Image error'));};img.src=u;});}
+function typeLabel(k){var x=(S.cfg.types||[]).filter(function(y){return y.k===k;})[0];return x?x.label:k;}
+function role(){return S.user?S.user.role:'';}
+function can(a){var r=role();var m={newScaffold:['admin','supervisor'],inspect:['admin','inspector','supervisor'],supervisors:['admin','inspector','supervisor','viewer'],admin:['admin']};return (m[a]||[]).indexOf(r)>=0;}
+
+/* ================= session ================= */
+function logout(silent){S.token=null;S.user=null;localStorage.removeItem('sc_tok');sessionStorage.removeItem('sc_tok');if(!silent||true)render();}
+function loadSession(){S.token=localStorage.getItem('sc_tok')||sessionStorage.getItem('sc_tok');}
+function refresh(){return api('listAll').then(function(j){S.user=j.user;S.cfg=j.cfg;S.scf=j.scaffolds;S.sup=j.supervisors;S.users=j.users;S.wa=j.wa;S.fail=j.failByContractor;S.today=j.today;});}
+
+/* ================= render shell ================= */
+function render(){
+  var app=$('app');
+  if(apiUrl().indexOf('http')!==0){app.innerHTML='<div class="login card"><h2>'+t('setupApi')+'</h2><input id="apiin" placeholder="https://script.google.com/macros/s/…/exec"><p><button class="btn" id="apisave">'+t('save')+'</button></p></div>';
+    $('apisave').onclick=function(){localStorage.setItem('sc_api',$('apiin').value.trim());render();};return;}
+  if(!S.token){renderLogin();return;}
+  if(!S.user){app.innerHTML='<main><p class="muted">'+t('loading')+'</p></main>';refresh().then(render).catch(function(e){toast(e.message,1);renderLogin();});return;}
+  var tabs=[['dash','t_dash'],['scaf','t_scaf']];
+  if(can('newScaffold'))tabs.push(['new','t_new']);
+  if(can('inspect'))tabs.push(['insp','t_insp']);
+  tabs.push(['sup','t_sup']);
+  if(can('admin')){tabs.push(['rem','t_rem']);tabs.push(['admin','t_admin']);}
+  app.innerHTML='<header><div><h1>'+t('title')+'</h1></div><div class="tr"><span class="ver">'+t('version')+' '+VERSION+'</span><span class="lang">'+['en','id','ms'].map(function(l){return '<button data-lang="'+l+'" class="'+(S.lang===l?'on':'')+'">'+l.toUpperCase()+'</button>';}).join('')+'</span><div class="who">'+esc(S.user.name)+' · '+esc(S.user.role)+'<a data-act="logout">'+t('logout')+'</a></div></div></header>'+
+   '<nav>'+tabs.map(function(x){return '<button data-tab="'+x[0]+'" class="'+(S.tab===x[0]?'on':'')+'">'+t(x[1])+'</button>';}).join('')+'</nav><main id="view"></main>';
+  var v={dash:vDash,scaf:vScaf,'new':vNew,insp:vInsp,sup:vSup,rem:vRem,admin:vAdmin}[S.tab]||vDash;
+  v($('view'));
+}
+function renderLogin(){
+  $('app').innerHTML='<div class="login card"><h1 style="text-align:center">'+t('title')+'</h1>'+
+   '<div style="text-align:right;margin-top:6px" class="tr"><span class="ver">'+t('version')+' '+VERSION+'</span><span class="lang">'+['en','id','ms'].map(function(l){return '<button data-lang="'+l+'" class="'+(S.lang===l?'on':'')+'">'+l.toUpperCase()+'</button>';}).join('')+'</span></div>'+
+   '<label>'+t('email')+'</label><input id="em" type="email" autocomplete="email"><p><button class="btn" id="sc">'+t('sendCode')+'</button></p>'+
+   '<div id="step2" style="display:none"><label>'+t('code')+'</label><input id="cd" inputmode="numeric" maxlength="6"><label style="text-transform:none"><input type="checkbox" id="kp" style="width:auto"> '+t('keep')+'</label><p><button class="btn" id="vf">'+t('verify')+'</button></p></div></div>';
+  $('sc').onclick=function(){var e=$('em').value.trim();if(!e)return;this.disabled=true;var b=this;
+   api('requestCode',{email:e}).then(function(){toast(t('codeSent'));$('step2').style.display='block';b.disabled=false;}).catch(function(x){toast(x.message,1);b.disabled=false;});};
+  $('vf').onclick=function(){var b=this;b.disabled=true;
+   api('verify',{email:$('em').value.trim(),code:$('cd').value.trim(),keep:$('kp').checked}).then(function(j){S.token=j.token;(($('kp').checked)?localStorage:sessionStorage).setItem('sc_tok',j.token);S.user=null;render();}).catch(function(x){toast(x.message,1);b.disabled=false;});};
+}
+
+/* ================= views ================= */
+function vDash(el){
+  var c={Active:0,Pending:0,Overdue:0,DoNotUse:0,Dismantled:0};S.scf.forEach(function(s){c[s.status]=(c[s.status]||0)+1;});
+  var h='<div class="grid">'+['Active','Pending','Overdue','DoNotUse','Dismantled'].map(function(k){return '<div class="stat" data-go="'+k+'"><b>'+c[k]+'</b><span>'+t(k)+'</span></div>';}).join('')+'</div>';
+  var need=S.scf.filter(function(s){return s.status==='Pending'||s.status==='Overdue'||s.status==='DoNotUse'||(s.status==='Active'&&s.daysToDue!==null&&s.daysToDue<=1);});
+  h+='<h2>'+t('needsAction')+'</h2>'+(need.length?need.map(itemScaf).join(''):'<p class="muted">'+t('none')+'</p>');
+  var ce=S.sup.filter(function(s){return s.approval!=='Suspended'&&(s.status==='Expired'||(s.daysLeft!==null&&s.daysLeft<=30));});
+  h+='<h2>'+t('certAlerts')+'</h2>'+(ce.length?ce.map(itemSup).join(''):'<p class="muted">'+t('none')+'</p>');
+  var fk=Object.keys(S.fail||{});h+='<h2>'+t('failByC')+'</h2>'+(fk.length?'<div class="card"><table>'+fk.map(function(k){return '<tr><td>'+esc(k)+'</td><td>'+S.fail[k]+'</td></tr>';}).join('')+'</table></div>':'<p class="muted">'+t('none')+'</p>');
+  el.innerHTML=h;
+}
+function itemScaf(s){return '<div class="item" data-scaf="'+esc(s.refId)+'"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.location)+' · '+t('nextDue')+': '+fd(s.nextDueDate)+'</small></div>'+chip(s.status)+'</div>';}
+function itemSup(s){return '<div class="item" data-sup="'+esc(s.id)+'"><div><span class="id">'+esc(s.name)+'</span><small>'+esc(s.contractor)+' · '+esc(s.certType)+' '+esc(s.certNo)+' · '+fd(s.expiryDate)+(s.daysLeft!==null&&s.daysLeft>=0?' ('+s.daysLeft+' '+t('daysLeft')+')':'')+'</small></div>'+chip(s.approval==='Suspended'?'Suspended':s.status)+'</div>';}
+
+function filteredScf(){var f=S.filter,q=f.q.toLowerCase();return S.scf.filter(function(s){return (!f.c||s.contractor===f.c)&&(!f.s||s.status===f.s)&&(!q||(s.refId+' '+s.location).toLowerCase().indexOf(q)>=0);});}
+function vScaf(el){
+  var f=S.filter;
+  el.innerHTML='<div class="bar"><input id="fq" placeholder="'+t('search')+'" value="'+esc(f.q)+'"><select id="fc"><option value="">'+t('contractor')+': '+t('all')+'</option>'+S.cfg.contractors.map(function(c){return '<option '+(f.c===c?'selected':'')+'>'+c+'</option>';}).join('')+'</select>'+
+   '<select id="fs"><option value="">'+t('status')+': '+t('all')+'</option>'+['Pending','Active','Overdue','DoNotUse','Dismantled'].map(function(c){return '<option value="'+c+'" '+(f.s===c?'selected':'')+'>'+t(c)+'</option>';}).join('')+'</select><button class="btn sec sm" id="csv">'+t('exportCsv')+'</button></div><div id="lst"></div>';
+  function paint(){var l=filteredScf();$('lst').innerHTML=l.length?l.map(itemScaf).join(''):'<p class="muted">'+t('none')+'</p>';}
+  paint();
+  $('fq').oninput=function(){f.q=this.value;paint();};$('fc').onchange=function(){f.c=this.value;paint();};$('fs').onchange=function(){f.s=this.value;paint();};
+  $('csv').onclick=function(){var cols=['refId','contractor','type','location','requestedBy','builtByName','erectedDate','loadClass','status','lastInspectionDate','nextDueDate','inspector','decommDate'];
+   var out=[cols.join(',')].concat(filteredScf().map(function(s){return cols.map(function(k){return '"'+String(s[k]||'').replace(/"/g,'""')+'"';}).join(',');})).join('\n');
+   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'text/csv'}));a.download='scaffolds_'+(S.today||'')+'.csv';a.click();};
+}
+
+function vNew(el){
+  var me=S.user,cs=me.role==='supervisor'?[me.contractor]:S.cfg.contractors;
+  el.innerHTML='<div class="card"><form id="nf"><div class="row2"><div><label>'+t('contractor')+'</label><select name="contractor" id="nc">'+cs.map(function(c){return '<option>'+c+'</option>';}).join('')+'</select></div>'+
+   '<div><label>'+t('type')+'</label><select name="type">'+S.cfg.types.map(function(x){return '<option value="'+x.k+'">'+x.k+' · '+esc(x.label)+'</option>';}).join('')+'</select></div></div>'+
+   '<label>'+t('location')+'</label><input name="location" required><label>'+t('requestedBy')+'</label><input name="requestedBy" required>'+
+   '<label>'+t('builtBy')+'</label><select name="builtById" id="nb"></select>'+
+   '<div class="row2"><div><label>'+t('erected')+'</label><input type="date" name="erectedDate" value="'+S.today+'" max="'+S.today+'"></div>'+
+   '<div><label>'+t('loadClass')+'</label><select name="loadClass" id="lc">'+S.cfg.loadClasses.map(function(x){return '<option value="'+x.k+'">'+x.k+(x.kg?' ('+x.kg+' kg/m²)':'')+'</option>';}).join('')+'</select></div></div>'+
+   '<div id="lk" style="display:none"><label>'+t('loadKg')+'</label><input type="number" name="loadKg" min="1"></div>'+
+   '<label>'+t('notes')+'</label><textarea name="notes"></textarea><p><button class="btn" type="submit">'+t('create')+'</button></p></form><div id="res"></div></div>';
+  function fillSup(){var c=$('nc').value;var l=S.sup.filter(function(s){return s.contractor===c&&s.status==='Approved';});
+   $('nb').innerHTML=l.map(function(s){return '<option value="'+s.id+'">'+esc(s.name)+' · '+esc(s.certNo)+'</option>';}).join('')||'<option value="">—</option>';}
+  fillSup();$('nc').onchange=fillSup;$('lc').onchange=function(){$('lk').style.display=this.value==='Special Purpose'?'block':'none';};
+  $('nf').onsubmit=function(e){e.preventDefault();var f=e.target,b=f.querySelector('button');var d={};new FormData(f).forEach(function(v,k){d[k]=v;});b.disabled=true;
+   api('createScaffold',d).then(function(j){return refresh().then(function(){
+     $('nf').style.display='none';$('res').innerHTML='<p>'+t('idMade')+'</p><div class="big" id="newid">'+esc(j.refId)+'</div><p class="muted">'+t('pendingNote')+'</p><p><button class="btn sec" id="cp">'+t('copy')+'</button> <button class="btn" id="again">'+t('t_new')+'</button></p>';
+     $('cp').onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(j.refId);toast(t('copied'));};$('again').onclick=function(){vNew(el);};});})
+    .catch(function(x){toast(x.message,1);b.disabled=false;});};
+}
+
+function eligibleInsp(){return S.scf.filter(function(s){return s.rawStatus!=='Dismantled';});}
+function vInsp(el,pre){
+  if(pre){S.insp={refId:pre,kind:null,answers:{},comments:{},front:null,back:null};}
+  var I=S.insp;
+  if(!I||!I.refId){
+    el.innerHTML='<div class="card"><label>'+t('pick')+'</label><input id="pq" list="pl" placeholder="'+t('pickPh')+'" autocomplete="off"><datalist id="pl">'+eligibleInsp().map(function(s){return '<option value="'+esc(s.refId)+'">'+esc(s.location)+' · '+t(s.status)+'</option>';}).join('')+'</datalist></div><div id="pickres"></div>';
+    $('pq').onchange=function(){var v=this.value.trim().toUpperCase();if(S.scf.some(function(s){return s.refId===v;})){S.insp={refId:v,kind:null,answers:{},comments:{},front:null,back:null};vInsp(el);}};
+    var needs=eligibleInsp().filter(function(s){return s.status!=='Active'||(s.daysToDue!==null&&s.daysToDue<=1);});
+    $('pickres').innerHTML='<h2>'+t('needsAction')+'</h2>'+(needs.length?needs.map(function(s){return '<div class="item" data-inspect="'+esc(s.refId)+'"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.location)+'</small></div>'+chip(s.status)+'</div>';}).join(''):'<p class="muted">'+t('none')+'</p>');
+    return;
+  }
+  var s=S.scf.filter(function(x){return x.refId===I.refId;})[0];if(!s){S.insp=null;return vInsp(el);}
+  var kinds=s.rawStatus==='Pending'?['Handover']:(role()==='supervisor'?['Weekly']:['Weekly','Special']);
+  if(!I.kind||kinds.indexOf(I.kind)<0)I.kind=kinds[0];
+  var ids=S.cfg.checklists[I.kind];
+  var groups={};ids.forEach(function(id){var g=id.charAt(0);(groups[g]=groups[g]||[]).push(id);});
+  var h='<div class="card"><div class="item" style="cursor:default"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.location)+' · '+esc(s.loadClass)+'</small></div>'+chip(s.status)+'</div>'+
+   '<label>'+t('kind')+'</label><select id="ik">'+kinds.map(function(k){return '<option value="'+k+'" '+(I.kind===k?'selected':'')+'>'+t(k)+'</option>';}).join('')+'</select>'+
+   '<p class="muted" id="prog"></p>';
+  Object.keys(groups).forEach(function(g){h+='<div class="gt">'+t('g_'+g)+'</div>'+groups[g].map(function(id){var a=I.answers[id]||'';
+    return '<div class="ck"><div>'+esc(ck(id))+'</div><div class="opts">'+[['P','pass'],['F','fail'],['N','na']].map(function(o){return '<label><input type="radio" name="r_'+id+'" value="'+o[0]+'" data-ck="'+id+'" '+(a===o[0]?'checked':'')+'><span>'+t(o[1])+'</span></label>';}).join('')+'</div>'+
+     '<div class="cm" id="cm_'+id+'" style="display:'+(a==='F'?'block':'none')+'"><input data-cm="'+id+'" placeholder="'+t('comment')+'" value="'+esc(I.comments[id]||'')+'"></div></div>';}).join('');});
+  h+='<label>'+t('overall')+'</label><textarea id="ov">'+esc(I.overall||'')+'</textarea>';
+  var needF=I.kind==='Handover',needB=I.kind!=='Handover';
+  h+='<label>'+t('photoFront')+(needF?' ('+t('required')+')':'')+'</label><input type="file" accept="image/*" capture="environment" id="pf"><img class="pv" id="pfv" style="display:'+(I.front?'block':'none')+'" src="'+(I.front||'')+'">';
+  h+='<label>'+t('photoBack')+(needB?' ('+t('required')+')':'')+'</label><input type="file" accept="image/*" capture="environment" id="pb"><img class="pv" id="pbv" style="display:'+(I.back?'block':'none')+'" src="'+(I.back||'')+'">';
+  h+='<p><button class="btn" id="go">'+t('submit')+'</button> <button class="btn sec" id="cx">'+t('cancel')+'</button></p></div>';
+  el.innerHTML=h;
+  function prog(){var n=ids.filter(function(id){return I.answers[id];}).length;$('prog').textContent=n+' / '+ids.length+' '+t('answered');}
+  prog();
+  $('ik').onchange=function(){I.kind=this.value;I.answers={};I.comments={};vInsp(el);};
+  el.querySelectorAll('input[data-ck]').forEach(function(r){r.onchange=function(){var id=r.getAttribute('data-ck');I.answers[id]=r.value;$('cm_'+id).style.display=r.value==='F'?'block':'none';prog();};});
+  el.querySelectorAll('input[data-cm]').forEach(function(r){r.oninput=function(){I.comments[r.getAttribute('data-cm')]=r.value;};});
+  $('ov').oninput=function(){I.overall=this.value;};
+  function ph(inp,key,prev){inp.onchange=function(){var f=inp.files[0];if(!f)return;compress(f).then(function(d){I[key]=d;$(prev).src=d;$(prev).style.display='block';}).catch(function(e){toast(e.message,1);});};}
+  ph($('pf'),'front','pfv');ph($('pb'),'back','pbv');
+  $('cx').onclick=function(){S.insp=null;vInsp(el);};
+  $('go').onclick=function(){var b=this;
+   var miss=ids.filter(function(id){return !I.answers[id];});if(miss.length){toast(miss.length+' '+t('required'),1);return;}
+   var bad=ids.filter(function(id){return I.answers[id]==='F'&&!(I.comments[id]||'').trim();});if(bad.length){toast(t('comment')+': '+bad.join(', '),1);return;}
+   if(needF&&!I.front){toast(t('photoFront')+' ('+t('required')+')',1);return;}
+   if(needB&&!I.back){toast(t('photoBack')+' ('+t('required')+')',1);return;}
+   b.disabled=true;toast(t('uploading'));
+   api('submitInspection',{refId:I.refId,kind:I.kind,answers:I.answers,comments:I.comments,overall:I.overall||'',photoFront:I.front,photoBack:I.back})
+    .then(function(j){S.insp=null;return refresh().then(function(){toast(j.result==='Pass'?t('resultPass')+': '+fd(j.nextDueDate):t('resultFail'),j.result!=='Pass');S.tab='scaf';render();});})
+    .catch(function(x){toast(x.message,1);b.disabled=false;});};
+}
+
+function vSup(el){
+  var admin=can('admin');
+  var h=(admin?'<div class="bar"><button class="btn" id="asup">'+t('addSup')+'</button><button class="btn sec" id="isup">'+t('importSup')+'</button></div>':'');
+  var l=S.sup.slice().sort(function(a,b){return (a.expiryDate||'').localeCompare(b.expiryDate||'');});
+  h+=l.length?l.map(itemSup).join(''):'<p class="muted">'+t('none')+'</p>';el.innerHTML=h;
+  if(admin){$('asup').onclick=function(){supForm(null);};$('isup').onclick=importForm;}
+}
+function modal(html){var m=document.createElement('div');m.className='modal';m.innerHTML='<div>'+html+'</div>';document.body.appendChild(m);m.addEventListener('click',function(e){if(e.target===m)m.remove();});return m;}
+function supForm(id){
+  var s=id?S.sup.filter(function(x){return x.id===id;})[0]:{};var photo=null;
+  var m=modal('<form id="sf"><h2>'+(id?t('edit'):t('addSup'))+'</h2><label>'+t('name')+'</label><input name="name" value="'+esc(s.name)+'" required>'+
+   '<div class="row2"><div><label>'+t('contractor')+'</label><select name="contractor">'+S.cfg.contractors.map(function(c){return '<option '+(s.contractor===c?'selected':'')+'>'+c+'</option>';}).join('')+'</select></div><div><label>'+t('phone')+'</label><input name="phone" value="'+esc(s.phone||'')+'" placeholder="08xxxxxxxxxx"></div></div>'+
+   '<label>'+t('email')+'</label><input name="email" type="email" value="'+esc(s.email||'')+'">'+
+   '<div class="row2"><div><label>'+t('certType')+'</label><input name="certType" value="'+esc(s.certType||'')+'"></div><div><label>'+t('certNo')+'</label><input name="certNo" value="'+esc(s.certNo||'')+'" required></div></div>'+
+   '<div class="row2"><div><label>'+t('issue')+'</label><input type="date" name="issueDate" value="'+esc(s.issueDate||'')+'"></div><div><label>'+t('expiry')+'</label><input type="date" name="expiryDate" value="'+esc(s.expiryDate||'')+'" required></div></div>'+
+   '<label>'+t('approval')+'</label><select name="approval"><option value="Approved" '+(s.approval!=='Suspended'?'selected':'')+'>'+t('Approved')+'</option><option value="Suspended" '+(s.approval==='Suspended'?'selected':'')+'>'+t('Suspended')+'</option></select>'+
+   '<label>'+t('certPhoto')+'</label><input type="file" accept="image/*" id="cph"><img class="pv" id="cpv" style="display:none">'+(s.certPhotoId?'<p><button type="button" class="btn sec sm" data-photo="'+esc(s.certPhotoId)+'">'+t('viewPhoto')+'</button></p>':'')+
+   '<label>'+t('notes')+'</label><textarea name="notes">'+esc(s.notes||'')+'</textarea><p><button class="btn" type="submit">'+t('save')+'</button> <button type="button" class="btn sec" id="x">'+t('cancel')+'</button></p></form>');
+  m.querySelector('#x').onclick=function(){m.remove();};
+  m.querySelector('#cph').onchange=function(){var f=this.files[0];if(!f)return;compress(f).then(function(d){photo=d;var p=m.querySelector('#cpv');p.src=d;p.style.display='block';});};
+  m.querySelector('#sf').onsubmit=function(e){e.preventDefault();var d={id:id||undefined};new FormData(e.target).forEach(function(v,k){d[k]=v;});if(photo)d.certPhoto=photo;var b=e.target.querySelector('button[type=submit]');b.disabled=true;
+   api('saveSupervisor',d).then(function(){return refresh();}).then(function(){m.remove();render();}).catch(function(x){toast(x.message,1);b.disabled=false;});};
+}
+function normDate(x){x=String(x||'').trim();var m=/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/.exec(x);if(m)return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);return x;}
+function importForm(){
+  var m=modal('<h2>'+t('importSup')+'</h2><p class="muted">'+t('importHelp')+'</p><textarea id="ta" style="min-height:160px"></textarea><p><button class="btn" id="go">'+t('importSup')+'</button> <button class="btn sec" id="x">'+t('cancel')+'</button></p><div id="out"></div>');
+  m.querySelector('#x').onclick=function(){m.remove();};
+  m.querySelector('#go').onclick=function(){var rows=m.querySelector('#ta').value.split('\n').map(function(l){return l.trim();}).filter(Boolean).map(function(l){var p=l.split(/\t|;|,/).map(function(x){return x.trim();});
+    return {name:p[0],contractor:p[1],phone:p[2],email:p[3],certType:p[4],certNo:p[5],issueDate:normDate(p[6]),expiryDate:normDate(p[7])};});
+   api('importSupervisors',{rows:rows}).then(function(j){m.querySelector('#out').innerHTML='<p>'+t('imported')+': '+j.added+'</p>'+j.errors.map(function(e){return '<p style="color:var(--r)">'+esc(e)+'</p>';}).join('');return refresh();}).then(function(){render();}).catch(function(x){toast(x.message,1);});};
+}
+
+function vRem(el){
+  el.innerHTML='<div class="bar"><button class="btn" id="run">'+t('runNow')+'</button></div><h2>'+t('waQueue')+'</h2><p class="muted">'+t('waHelp')+'</p>'+
+   (S.wa.length?S.wa.map(function(w){return '<div class="card"><b>'+esc(w.toName)+'</b> <span class="muted">'+fd(w.date)+'</span><p style="font-size:13px">'+esc(w.message)+'</p><a class="btn sm" style="text-decoration:none;display:inline-block" target="_blank" rel="noopener" href="'+esc(w.link)+'">'+t('sendWa')+'</a> <button class="btn sec sm" data-wasent="'+esc(w.id)+'">'+t('markSent')+'</button></div>';}).join(''):'<p class="muted">'+t('none')+'</p>');
+  $('run').onclick=function(){var b=this;b.disabled=true;api('runNow').then(function(j){toast(t('ranNow')+': WA '+j.result.wa+', mail '+j.result.mails);return refresh();}).then(function(){render();}).catch(function(x){toast(x.message,1);b.disabled=false;});};
+}
+function vAdmin(el){
+  var types=S.cfg.types.map(function(x){return x.k+':'+x.label;}).join('|');
+  el.innerHTML='<h2>'+t('settings')+'</h2><div class="card"><form id="cf"><label>'+t('interval')+'</label><input name="intervalDays" type="number" min="1" max="31" value="'+S.cfg.intervalDays+'"><label>'+t('contractors')+'</label><input name="contractors" value="'+esc(S.cfg.contractors.join(','))+'"><label>'+t('types')+'</label><input name="types" value="'+esc(types)+'"><p><button class="btn" type="submit">'+t('save')+'</button></p></form></div>'+
+   '<h2>'+t('users')+'</h2>'+S.users.map(function(u){return '<div class="item" data-user="'+esc(u.email)+'"><div><span class="id">'+esc(u.name)+'</span><small>'+esc(u.email)+' · '+esc(u.role)+(u.contractor?' · '+esc(u.contractor):'')+'</small></div>'+(u.active==='FALSE'?'<span class="chip c-Dismantled">off</span>':'')+'</div>';}).join('')+
+   '<p><button class="btn" id="au">'+t('addUser')+'</button></p>';
+  $('cf').onsubmit=function(e){e.preventDefault();var d={};new FormData(e.target).forEach(function(v,k){d[k]=v;});api('saveConfig',d).then(function(){return refresh();}).then(function(){toast(t('save'));render();}).catch(function(x){toast(x.message,1);});};
+  $('au').onclick=function(){userForm(null);};
+}
+function userForm(email){
+  var u=email?S.users.filter(function(x){return x.email===email;})[0]:{role:'inspector',active:'TRUE'};
+  var m=modal('<form id="uf"><h2>'+t('addUser')+'</h2><label>'+t('email')+'</label><input name="email" type="email" value="'+esc(u.email||'')+'" '+(email?'readonly':'')+' required><label>'+t('name')+'</label><input name="name" value="'+esc(u.name||'')+'">'+
+   '<div class="row2"><div><label>'+t('role')+'</label><select name="role">'+['admin','inspector','supervisor','viewer'].map(function(r){return '<option '+(u.role===r?'selected':'')+'>'+r+'</option>';}).join('')+'</select></div><div><label>'+t('contractor')+'</label><select name="contractor"><option value="">—</option>'+S.cfg.contractors.map(function(c){return '<option '+(u.contractor===c?'selected':'')+'>'+c+'</option>';}).join('')+'</select></div></div>'+
+   '<label>'+t('active')+'</label><select name="active"><option value="TRUE" '+(u.active!=='FALSE'?'selected':'')+'>On</option><option value="FALSE" '+(u.active==='FALSE'?'selected':'')+'>Off</option></select><p><button class="btn" type="submit">'+t('save')+'</button> <button type="button" class="btn sec" id="x">'+t('cancel')+'</button></p></form>');
+  m.querySelector('#x').onclick=function(){m.remove();};
+  m.querySelector('#uf').onsubmit=function(e){e.preventDefault();var d={};new FormData(e.target).forEach(function(v,k){d[k]=v;});api('saveUser',d).then(function(){return refresh();}).then(function(){m.remove();render();}).catch(function(x){toast(x.message,1);});};
+}
+
+function showPhoto(id){var m=modal('<p class="muted">'+t('loading')+'</p><p><button class="btn sec" id="x">'+t('close')+'</button></p>');m.querySelector('#x').onclick=function(){m.remove();};
+  api('getPhoto',{id:id}).then(function(j){m.firstChild.innerHTML='<img class="full" src="'+j.dataUrl+'"><p><button class="btn sec" id="x2">'+t('close')+'</button></p>';m.querySelector('#x2').onclick=function(){m.remove();};}).catch(function(e){toast(e.message,1);m.remove();});}
+
+function scafDetail(refId){
+  var s=S.scf.filter(function(x){return x.refId===refId;})[0];if(!s)return;
+  var m=modal('<h2 style="margin-top:0">'+esc(s.refId)+' '+chip(s.status)+'</h2><table>'+
+   [['contractor',s.contractor],['type',s.type+' · '+typeLabel(s.type)],['location',s.location],['requestedBy',s.requestedBy],['builtBy',s.builtByName],['erected',fd(s.erectedDate)],['loadClass',s.loadClass+(s.loadKg?' ('+s.loadKg+' kg/m²)':'')],['lastInsp',fd(s.lastInspectionDate)],['nextDue',fd(s.nextDueDate)],['inspector',s.inspector||'—']].map(function(r){return '<tr><td class="muted">'+t(r[0])+'</td><td>'+esc(r[1])+'</td></tr>';}).join('')+'</table>'+
+   '<p>'+(s.tagFrontId?'<button class="btn sec sm" data-photo="'+esc(s.tagFrontId)+'">'+t('front')+'</button> ':'')+(s.tagBackId?'<button class="btn sec sm" data-photo="'+esc(s.tagBackId)+'">'+t('back')+'</button> ':'')+'</p>'+
+   '<p>'+((s.rawStatus!=='Dismantled'&&can('inspect'))?'<button class="btn" id="di">'+t('inspectNow')+'</button> ':'')+((s.rawStatus!=='Dismantled'&&role()!=='viewer')?'<button class="btn red sm" id="dd">'+t('dismantle')+'</button> ':'')+'<button class="btn sec sm" id="dx">'+t('close')+'</button></p>'+
+   '<h2>'+t('history')+'</h2><div id="hs"><p class="muted">'+t('loading')+'</p></div>');
+  m.querySelector('#dx').onclick=function(){m.remove();};
+  var di=m.querySelector('#di');if(di)di.onclick=function(){m.remove();S.tab='insp';S.insp={refId:s.refId,kind:null,answers:{},comments:{},front:null,back:null};render();};
+  var dd=m.querySelector('#dd');if(dd)dd.onclick=function(){if(!confirm(t('confirmDis')))return;api('dismantle',{refId:s.refId}).then(function(){return refresh();}).then(function(){m.remove();render();}).catch(function(x){toast(x.message,1);});};
+  m.addEventListener('click',function(e){var p=e.target.getAttribute&&e.target.getAttribute('data-photo');if(p)showPhoto(p);});
+  api('history',{refId:s.refId}).then(function(j){m.querySelector('#hs').innerHTML=j.history.length?j.history.map(function(h){
+    return '<div class="card" style="padding:10px"><b>'+fd(h.date)+' '+esc(h.time)+'</b> · '+t(h.kind)+' · '+esc(h.inspector)+' '+chip(h.result)+
+     (h.failed.length?'<ul style="margin:6px 0;padding-left:18px;font-size:13px">'+h.failed.map(function(f){return '<li>'+esc(ck(f.id))+(f.c?' — <i>'+esc(f.c)+'</i>':'')+'</li>';}).join('')+'</ul>':'')+
+     (h.comments?'<div class="muted" style="font-size:13px">'+esc(h.comments)+'</div>':'')+
+     '<div style="margin-top:6px">'+(h.photoFrontId?'<button class="btn sec sm" data-photo="'+esc(h.photoFrontId)+'">'+t('front')+'</button> ':'')+(h.photoBackId?'<button class="btn sec sm" data-photo="'+esc(h.photoBackId)+'">'+t('back')+'</button>':'')+'</div></div>';}).join(''):'<p class="muted">'+t('none')+'</p>';}).catch(function(e){m.querySelector('#hs').textContent=e.message;});
+}
+
+/* ================= events ================= */
+document.addEventListener('click',function(e){
+  var el=e.target.closest('[data-lang],[data-tab],[data-act],[data-scaf],[data-sup],[data-go],[data-inspect],[data-wasent],[data-user],[data-photo]');if(!el)return;
+  if(el.hasAttribute('data-photo')&&el.closest('.modal')&&!el.closest('#sf')){return;}
+  if(el.hasAttribute('data-photo')){showPhoto(el.getAttribute('data-photo'));return;}
+  if(el.hasAttribute('data-lang')){S.lang=el.getAttribute('data-lang');localStorage.setItem('sc_lang',S.lang);document.documentElement.lang=S.lang;render();return;}
+  if(el.hasAttribute('data-tab')){S.tab=el.getAttribute('data-tab');if(S.tab!=='insp')S.insp=null;render();return;}
+  if(el.getAttribute('data-act')==='logout'){logout();return;}
+  if(el.hasAttribute('data-scaf')){scafDetail(el.getAttribute('data-scaf'));return;}
+  if(el.hasAttribute('data-sup')){if(can('admin'))supForm(el.getAttribute('data-sup'));else S.tab='sup',render();return;}
+  if(el.hasAttribute('data-go')){S.filter={q:'',c:'',s:el.getAttribute('data-go')};S.tab='scaf';render();return;}
+  if(el.hasAttribute('data-inspect')){S.tab='insp';vInsp($('view'),el.getAttribute('data-inspect'));return;}
+  if(el.hasAttribute('data-wasent')){api('waMark',{id:el.getAttribute('data-wasent')}).then(function(){return refresh();}).then(render).catch(function(x){toast(x.message,1);});return;}
+  if(el.hasAttribute('data-user')){userForm(el.getAttribute('data-user'));return;}
+});
+loadSession();render();
+</script>
+</body>
+</html>
