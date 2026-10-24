@@ -73,13 +73,13 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{text-align:left;p
 'use strict';
 /* ================= CONFIG ================= */
 var API_URL = 'https://script.google.com/macros/s/AKfycbxbNSJGjm2iB6SA6z2wiXMS_R1nuCZU3cdeHR62QK0YkxRpZn0nK3_oRvOZX4MfHb4L/exec';
-var VERSION = '1.1.2';
+var VERSION = '1.1.3';
 
 /* ================= i18n ================= */
 var L = {
 en:{title:'Scaffold Inspection Register',version:'Version',login:'Log in',email:'Email',sendCode:'Send code',code:'6-digit code',verify:'Verify',keep:'Keep me logged in',logout:'Log out',
  codeSent:'If this email is registered, a code was sent.',setupApi:'Paste the Apps Script web app URL',save:'Save',cancel:'Cancel',close:'Close',submit:'Submit',add:'Add',edit:'Edit',view:'View',loading:'Loading…',
- t_dash:'Dashboard',t_scaf:'Scaffolds',t_new:'New scaffold',t_insp:'Inspect',t_sup:'Supervisors',t_rem:'Reminders',t_crew:'Scaffolders',addCrew:'Add scaffolder',importCrew:'Import names',crewRole:'Grade / role',crewPhoto:'Photo of scaffolder',NoCert:'No certificate',crewImportHelp:'One per line: name, contractor, grade, phone, certType, certNo, issueDate, expiryDate (certificate columns may be left empty)',certOptional:'Leave the certificate fields empty if not yet available.',total:'Total',crewNoPhoto:'No photo',waitInspector:'Waiting for the inspector: the handover inspection must be done by an inspector.',noSup:'No approved supervisor for this contractor. Add or renew one first.',t_admin:'Admin',
+ t_dash:'Dashboard',t_scaf:'Scaffolds',t_new:'New scaffold',t_insp:'Inspect',t_sup:'Supervisors',t_rem:'Reminders',t_crew:'Scaffolders',addCrew:'Add scaffolder',importCrew:'Import names',crewRole:'Grade / role',crewPhoto:'Photo of scaffolder',NoCert:'No certificate',crewImportHelp:'One per line: name, contractor, grade, phone, certType, certNo, issueDate, expiryDate (certificate columns may be left empty)',certOptional:'Leave the certificate fields empty if not yet available.',total:'Total',crewNoPhoto:'No photo',waitInspector:'Waiting for the inspector: the handover inspection must be done by an inspector.',noSup:'No approved supervisor for this contractor. Add or renew one first.',mainLoc:'Main location (UA/UC list)',pickLoc:'Select main location',subLoc:'Sub location',subLocPh:'e.g. Level 2, east side of tank T-05',subLocHelp:'The inspector enters the sub location at the handover inspection.',allReq:'All fields are required.',locList:'Main locations (one per line)',syncUauc:'Sync from UA/UC Report app',locFound:'locations found. Review, then Save.',syncFail:'Could not read the UA/UC app. Edit the list by hand.',t_admin:'Admin',
  Active:'Active',Pending:'Pending',Overdue:'Overdue',DoNotUse:'Do not use',Dismantled:'Dismantled',Approved:'Approved',Expired:'Expired',Suspended:'Suspended',Pass:'Pass',Fail:'Fail',
  needsAction:'Needs action',certAlerts:'Supervisor certificates',failByC:'Failed inspections, last 90 days',none:'Nothing here.',
  contractor:'Contractor',type:'Scaffold type',location:'Location',requestedBy:'Requested by',builtBy:'Built by (approved supervisor)',erected:'Date erected',loadClass:'Load class',loadKg:'Load (kg/m²)',notes:'Notes',
@@ -95,7 +95,7 @@ en:{title:'Scaffold Inspection Register',version:'Version',login:'Log in',email:
  g_F:'Foundation',g_S:'Structure',g_P:'Platform',g_E:'Edge protection',g_A:'Access',g_V:'Environment & tag',g_W:'Weekly checks'},
 id:{title:'Register Inspeksi Scaffold',version:'Versi',login:'Masuk',email:'Email',sendCode:'Kirim kode',code:'Kode 6 digit',verify:'Verifikasi',keep:'Tetap masuk',logout:'Keluar',
  codeSent:'Jika email terdaftar, kode telah dikirim.',save:'Simpan',cancel:'Batal',close:'Tutup',submit:'Kirim',add:'Tambah',edit:'Ubah',view:'Lihat',loading:'Memuat…',
- t_dash:'Dasbor',t_scaf:'Scaffold',t_new:'Scaffold baru',t_insp:'Inspeksi',t_sup:'Supervisor',t_rem:'Pengingat',t_crew:'Scaffolder',addCrew:'Tambah scaffolder',importCrew:'Impor nama',crewRole:'Tingkat / peran',crewPhoto:'Foto scaffolder',NoCert:'Belum ada sertifikat',crewImportHelp:'Satu per baris: nama, kontraktor, tingkat, telepon, jenis sertifikat, no. sertifikat, tgl terbit, tgl berakhir (kolom sertifikat boleh kosong)',certOptional:'Kosongkan kolom sertifikat jika belum ada.',total:'Total',crewNoPhoto:'Tanpa foto',waitInspector:'Menunggu inspektur: inspeksi serah terima harus dilakukan oleh inspektur.',noSup:'Belum ada supervisor disetujui untuk kontraktor ini. Tambah atau perbarui dulu.',t_admin:'Admin',
+ t_dash:'Dasbor',t_scaf:'Scaffold',t_new:'Scaffold baru',t_insp:'Inspeksi',t_sup:'Supervisor',t_rem:'Pengingat',t_crew:'Scaffolder',addCrew:'Tambah scaffolder',importCrew:'Impor nama',crewRole:'Tingkat / peran',crewPhoto:'Foto scaffolder',NoCert:'Belum ada sertifikat',crewImportHelp:'Satu per baris: nama, kontraktor, tingkat, telepon, jenis sertifikat, no. sertifikat, tgl terbit, tgl berakhir (kolom sertifikat boleh kosong)',certOptional:'Kosongkan kolom sertifikat jika belum ada.',total:'Total',crewNoPhoto:'Tanpa foto',waitInspector:'Menunggu inspektur: inspeksi serah terima harus dilakukan oleh inspektur.',noSup:'Belum ada supervisor disetujui untuk kontraktor ini. Tambah atau perbarui dulu.',mainLoc:'Lokasi utama (daftar UA/UC)',pickLoc:'Pilih lokasi utama',subLoc:'Sub lokasi',subLocPh:'mis. Lantai 2, sisi timur tangki T-05',subLocHelp:'Inspektur mengisi sub lokasi saat inspeksi serah terima.',allReq:'Semua kolom wajib diisi.',locList:'Lokasi utama (satu per baris)',syncUauc:'Sinkron dari aplikasi Laporan UA/UC',locFound:'lokasi ditemukan. Periksa, lalu Simpan.',syncFail:'Tidak bisa membaca aplikasi UA/UC. Ubah daftar secara manual.',t_admin:'Admin',
  Active:'Aktif',Pending:'Menunggu',Overdue:'Terlambat',DoNotUse:'Dilarang dipakai',Dismantled:'Dibongkar',Approved:'Disetujui',Expired:'Kedaluwarsa',Suspended:'Ditangguhkan',Pass:'Lulus',Fail:'Gagal',
  needsAction:'Perlu tindakan',certAlerts:'Sertifikat supervisor',failByC:'Inspeksi gagal, 90 hari terakhir',none:'Tidak ada.',
  contractor:'Kontraktor',type:'Jenis scaffold',location:'Lokasi',requestedBy:'Diminta oleh',builtBy:'Dibangun oleh (supervisor disetujui)',erected:'Tanggal didirikan',loadClass:'Kelas beban',loadKg:'Beban (kg/m²)',notes:'Catatan',
@@ -111,7 +111,7 @@ id:{title:'Register Inspeksi Scaffold',version:'Versi',login:'Masuk',email:'Emai
  g_F:'Pondasi',g_S:'Struktur',g_P:'Platform',g_E:'Pagar pengaman',g_A:'Akses',g_V:'Lingkungan & tag',g_W:'Pemeriksaan mingguan'},
 ms:{title:'Daftar Pemeriksaan Perancah',version:'Versi',login:'Log masuk',email:'E-mel',sendCode:'Hantar kod',code:'Kod 6 digit',verify:'Sahkan',keep:'Kekalkan log masuk',logout:'Log keluar',
  codeSent:'Jika e-mel berdaftar, kod telah dihantar.',save:'Simpan',cancel:'Batal',close:'Tutup',submit:'Hantar',add:'Tambah',edit:'Ubah',view:'Lihat',loading:'Memuatkan…',
- t_dash:'Papan pemuka',t_scaf:'Perancah',t_new:'Perancah baharu',t_insp:'Pemeriksaan',t_sup:'Penyelia',t_rem:'Peringatan',t_crew:'Pemasang perancah',addCrew:'Tambah pemasang perancah',importCrew:'Import nama',crewRole:'Gred / peranan',crewPhoto:'Foto pemasang perancah',NoCert:'Tiada sijil',crewImportHelp:'Satu setiap baris: nama, kontraktor, gred, telefon, jenis sijil, no. sijil, tarikh keluar, tarikh tamat (lajur sijil boleh kosong)',certOptional:'Kosongkan medan sijil jika belum ada.',total:'Jumlah',crewNoPhoto:'Tiada foto',waitInspector:'Menunggu pemeriksa: pemeriksaan serah terima mesti dibuat oleh pemeriksa.',noSup:'Tiada penyelia diluluskan untuk kontraktor ini. Tambah atau baharui dahulu.',t_admin:'Admin',
+ t_dash:'Papan pemuka',t_scaf:'Perancah',t_new:'Perancah baharu',t_insp:'Pemeriksaan',t_sup:'Penyelia',t_rem:'Peringatan',t_crew:'Pemasang perancah',addCrew:'Tambah pemasang perancah',importCrew:'Import nama',crewRole:'Gred / peranan',crewPhoto:'Foto pemasang perancah',NoCert:'Tiada sijil',crewImportHelp:'Satu setiap baris: nama, kontraktor, gred, telefon, jenis sijil, no. sijil, tarikh keluar, tarikh tamat (lajur sijil boleh kosong)',certOptional:'Kosongkan medan sijil jika belum ada.',total:'Jumlah',crewNoPhoto:'Tiada foto',waitInspector:'Menunggu pemeriksa: pemeriksaan serah terima mesti dibuat oleh pemeriksa.',noSup:'Tiada penyelia diluluskan untuk kontraktor ini. Tambah atau baharui dahulu.',mainLoc:'Lokasi utama (senarai UA/UC)',pickLoc:'Pilih lokasi utama',subLoc:'Sub lokasi',subLocPh:'cth. Tingkat 2, sebelah timur tangki T-05',subLocHelp:'Pemeriksa mengisi sub lokasi semasa pemeriksaan serah terima.',allReq:'Semua medan wajib diisi.',locList:'Lokasi utama (satu setiap baris)',syncUauc:'Segerak daripada aplikasi Laporan UA/UC',locFound:'lokasi ditemui. Semak, kemudian Simpan.',syncFail:'Tidak dapat membaca aplikasi UA/UC. Ubah senarai secara manual.',t_admin:'Admin',
  Active:'Aktif',Pending:'Menunggu',Overdue:'Lewat',DoNotUse:'Dilarang guna',Dismantled:'Dibongkar',Approved:'Diluluskan',Expired:'Tamat tempoh',Suspended:'Digantung',Pass:'Lulus',Fail:'Gagal',
  needsAction:'Perlu tindakan',certAlerts:'Sijil penyelia',failByC:'Pemeriksaan gagal, 90 hari lepas',none:'Tiada.',
  contractor:'Kontraktor',type:'Jenis perancah',location:'Lokasi',requestedBy:'Dimohon oleh',builtBy:'Dibina oleh (penyelia diluluskan)',erected:'Tarikh didirikan',loadClass:'Kelas beban',loadKg:'Beban (kg/m²)',notes:'Nota',
@@ -220,11 +220,11 @@ function vDash(el){
   var fk=Object.keys(S.fail||{});h+='<h2>'+t('failByC')+'</h2>'+(fk.length?'<div class="card"><table>'+fk.map(function(k){return '<tr><td>'+esc(k)+'</td><td>'+S.fail[k]+'</td></tr>';}).join('')+'</table></div>':'<p class="muted">'+t('none')+'</p>');
   el.innerHTML=h;
 }
-function itemScaf(s){return '<div class="item" data-scaf="'+esc(s.refId)+'"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.location)+' · '+t('nextDue')+': '+fd(s.nextDueDate)+'</small></div>'+chip(s.status)+'</div>';}
+function itemScaf(s){return '<div class="item" data-scaf="'+esc(s.refId)+'"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.locationFull||s.location)+' · '+t('nextDue')+': '+fd(s.nextDueDate)+'</small></div>'+chip(s.status)+'</div>';}
 function itemSup(s){return '<div class="item" data-sup="'+esc(s.id)+'"><div><span class="id">'+esc(s.name)+'</span><small>'+esc(s.contractor)+' · '+esc(s.certType)+' '+esc(s.certNo)+' · '+fd(s.expiryDate)+(s.daysLeft!==null&&s.daysLeft>=0?' ('+s.daysLeft+' '+t('daysLeft')+')':'')+'</small></div>'+chip(s.approval==='Suspended'?'Suspended':s.status)+'</div>';}
 
 function itemCrew(s){return '<div class="item" data-crew="'+esc(s.id)+'"><div><span class="id">'+esc(s.name)+'</span><small>'+esc(s.contractor)+' · '+esc(s.role||'')+(s.certNo?' · '+esc(s.certType)+' '+esc(s.certNo)+' · '+fd(s.expiryDate)+(s.daysLeft!==null&&s.daysLeft>=0?' ('+s.daysLeft+' '+t('daysLeft')+')':''):'')+'</small></div>'+chip(s.status)+'</div>';}
-function filteredScf(){var f=S.filter,q=f.q.toLowerCase();return S.scf.filter(function(s){return (!f.c||s.contractor===f.c)&&(!f.s||s.status===f.s)&&(!q||(s.refId+' '+s.location).toLowerCase().indexOf(q)>=0);});}
+function filteredScf(){var f=S.filter,q=f.q.toLowerCase();return S.scf.filter(function(s){return (!f.c||s.contractor===f.c)&&(!f.s||s.status===f.s)&&(!q||(s.refId+' '+(s.locationFull||s.location)).toLowerCase().indexOf(q)>=0);});}
 function vScaf(el){
   var f=S.filter;
   el.innerHTML='<div class="bar"><input id="fq" placeholder="'+t('search')+'" value="'+esc(f.q)+'"><select id="fc"><option value="">'+t('contractor')+': '+t('all')+'</option>'+S.cfg.contractors.map(function(c){return '<option '+(f.c===c?'selected':'')+'>'+c+'</option>';}).join('')+'</select>'+
@@ -232,7 +232,7 @@ function vScaf(el){
   function paint(){var l=filteredScf();$('lst').innerHTML=l.length?l.map(itemScaf).join(''):'<p class="muted">'+t('none')+'</p>';}
   paint();
   $('fq').oninput=function(){f.q=this.value;paint();};$('fc').onchange=function(){f.c=this.value;paint();};$('fs').onchange=function(){f.s=this.value;paint();};
-  $('csv').onclick=function(){var cols=['refId','contractor','type','location','requestedBy','builtByName','erectedDate','loadClass','status','lastInspectionDate','nextDueDate','inspector','decommDate'];
+  $('csv').onclick=function(){var cols=['refId','contractor','type','location','subLocation','requestedBy','builtByName','erectedDate','loadClass','status','lastInspectionDate','nextDueDate','inspector','decommDate'];
    var out=[cols.join(',')].concat(filteredScf().map(function(s){return cols.map(function(k){return '"'+String(s[k]||'').replace(/"/g,'""')+'"';}).join(',');})).join('\n');
    var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'text/csv'}));a.download='scaffolds_'+(S.today||'')+'.csv';a.click();};
 }
@@ -241,16 +241,16 @@ function vNew(el){
   var me=S.user,cs=me.role==='supervisor'?[me.contractor]:S.cfg.contractors;
   el.innerHTML='<div class="card"><form id="nf"><div class="row2"><div><label>'+t('contractor')+'</label><select name="contractor" id="nc">'+cs.map(function(c){return '<option>'+c+'</option>';}).join('')+'</select></div>'+
    '<div><label>'+t('type')+'</label><select name="type">'+S.cfg.types.map(function(x){return '<option value="'+x.k+'">'+x.k+' · '+esc(x.label)+'</option>';}).join('')+'</select></div></div>'+
-   '<label>'+t('location')+'</label><input name="location" required><label>'+t('requestedBy')+'</label><input name="requestedBy" required>'+
+   '<label>'+t('mainLoc')+'</label><select name="location" id="nl" required><option value="">'+t('pickLoc')+'</option>'+S.cfg.mainLocations.map(function(x){return '<option>'+esc(x)+'</option>';}).join('')+'</select><p class="muted">'+t('subLocHelp')+'</p><label>'+t('requestedBy')+'</label><input name="requestedBy" required>'+
    '<label>'+t('builtBy')+'</label><select name="builtById" id="nb"></select>'+
-   '<div class="row2"><div><label>'+t('erected')+'</label><input type="date" name="erectedDate" value="'+S.today+'" max="'+S.today+'"></div>'+
+   '<div class="row2"><div><label>'+t('erected')+'</label><input type="date" name="erectedDate" value="'+S.today+'" max="'+S.today+'" required></div>'+
    '<div><label>'+t('loadClass')+'</label><select name="loadClass" id="lc">'+S.cfg.loadClasses.map(function(x){return '<option value="'+x.k+'">'+x.k+(x.kg?' ('+x.kg+' kg/m²)':'')+'</option>';}).join('')+'</select></div></div>'+
-   '<div id="lk" style="display:none"><label>'+t('loadKg')+'</label><input type="number" name="loadKg" min="1"></div>'+
-   '<label>'+t('notes')+'</label><textarea name="notes"></textarea><p id="nsw" style="color:var(--r);display:none">'+t('noSup')+'</p><p><button class="btn" type="submit" id="nsub">'+t('create')+'</button></p></form><div id="res"></div></div>';
+   '<div id="lk" style="display:none"><label>'+t('loadKg')+'</label><input type="number" name="loadKg" min="1" id="lkv"></div>'+
+   '<label>'+t('notes')+' ('+t('required')+')</label><textarea name="notes" required></textarea><p id="nsw" style="color:var(--r);display:none">'+t('noSup')+'</p><p><button class="btn" type="submit" id="nsub">'+t('create')+'</button></p></form><div id="res"></div></div>';
   function fillSup(){var c=$('nc').value;var l=S.sup.filter(function(s){return s.contractor===c&&s.status==='Approved';});
    $('nb').innerHTML=l.map(function(s){return '<option value="'+s.id+'">'+esc(s.name)+' · '+esc(s.certNo)+'</option>';}).join('')||'<option value="">—</option>';$('nsw').style.display=l.length?'none':'block';$('nsub').disabled=!l.length;}
-  fillSup();$('nc').onchange=fillSup;$('lc').onchange=function(){$('lk').style.display=this.value==='Special Purpose'?'block':'none';};
-  $('nf').onsubmit=function(e){e.preventDefault();var f=e.target,b=f.querySelector('button');var d={};new FormData(f).forEach(function(v,k){d[k]=v;});b.disabled=true;
+  fillSup();$('nc').onchange=fillSup;$('lc').onchange=function(){var sp=this.value==='Special Purpose';$('lk').style.display=sp?'block':'none';$('lkv').required=sp;};
+  $('nf').onsubmit=function(e){e.preventDefault();var f=e.target,b=f.querySelector('button');var d={};new FormData(f).forEach(function(v,k){d[k]=v;});if(!d.location||!(d.requestedBy||'').trim()||!(d.notes||'').trim()||(d.loadClass==='Special Purpose'&&!d.loadKg)){toast(t('allReq'),1);return;}b.disabled=true;
    api('createScaffold',d).then(function(j){return refresh().then(function(){
      $('nf').style.display='none';$('res').innerHTML='<p>'+t('idMade')+'</p><div class="big" id="newid">'+esc(j.refId)+'</div><p class="muted">'+t('pendingNote')+'</p><p><button class="btn sec" id="cp">'+t('copy')+'</button> <button class="btn" id="again">'+t('t_new')+'</button></p>';
      $('cp').onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(j.refId);toast(t('copied'));};$('again').onclick=function(){vNew(el);};});})
@@ -262,25 +262,26 @@ function vInsp(el,pre){
   if(pre){S.insp={refId:pre,kind:null,answers:{},comments:{},front:null,back:null};}
   var I=S.insp;
   if(!I||!I.refId){
-    el.innerHTML='<div class="card"><label>'+t('pick')+'</label><input id="pq" list="pl" placeholder="'+t('pickPh')+'" autocomplete="off"><datalist id="pl">'+eligibleInsp().map(function(s){return '<option value="'+esc(s.refId)+'">'+esc(s.location)+' · '+t(s.status)+'</option>';}).join('')+'</datalist></div><div id="pickres"></div>';
+    el.innerHTML='<div class="card"><label>'+t('pick')+'</label><input id="pq" list="pl" placeholder="'+t('pickPh')+'" autocomplete="off"><datalist id="pl">'+eligibleInsp().map(function(s){return '<option value="'+esc(s.refId)+'">'+esc(s.locationFull||s.location)+' · '+t(s.status)+'</option>';}).join('')+'</datalist></div><div id="pickres"></div>';
     $('pq').onchange=function(){var v=this.value.trim().toUpperCase();if(S.scf.some(function(s){return s.refId===v;})){S.insp={refId:v,kind:null,answers:{},comments:{},front:null,back:null};vInsp(el);}};
     var needs=eligibleInsp().filter(function(s){return s.status!=='Active'||(s.daysToDue!==null&&s.daysToDue<=1);});
-    $('pickres').innerHTML='<h2>'+t('needsAction')+'</h2>'+(needs.length?needs.map(function(s){return '<div class="item" data-inspect="'+esc(s.refId)+'"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.location)+'</small></div>'+chip(s.status)+'</div>';}).join(''):'<p class="muted">'+t('none')+'</p>');
+    $('pickres').innerHTML='<h2>'+t('needsAction')+'</h2>'+(needs.length?needs.map(function(s){return '<div class="item" data-inspect="'+esc(s.refId)+'"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.locationFull||s.location)+'</small></div>'+chip(s.status)+'</div>';}).join(''):'<p class="muted">'+t('none')+'</p>');
     return;
   }
   var s=S.scf.filter(function(x){return x.refId===I.refId;})[0];if(!s){S.insp=null;return vInsp(el);}
   var kinds=!s.handoverDone?(role()==='supervisor'?[]:['Handover']):(role()==='supervisor'?['Weekly']:['Weekly','Special']);
-  if(!kinds.length){el.innerHTML='<div class="card"><div class="item" style="cursor:default"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.location)+'</small></div>'+chip(s.status)+'</div><p>'+t('waitInspector')+'</p><p><button class="btn sec" id="cx">'+t('cancel')+'</button></p></div>';$('cx').onclick=function(){S.insp=null;vInsp(el);};return;}
+  if(!kinds.length){el.innerHTML='<div class="card"><div class="item" style="cursor:default"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.locationFull||s.location)+'</small></div>'+chip(s.status)+'</div><p>'+t('waitInspector')+'</p><p><button class="btn sec" id="cx">'+t('cancel')+'</button></p></div>';$('cx').onclick=function(){S.insp=null;vInsp(el);};return;}
   if(!I.kind||kinds.indexOf(I.kind)<0)I.kind=kinds[0];
   var ids=S.cfg.checklists[I.kind];
   var groups={};ids.forEach(function(id){var g=id.charAt(0);(groups[g]=groups[g]||[]).push(id);});
-  var h='<div class="card"><div class="item" style="cursor:default"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.location)+' · '+esc(s.loadClass)+'</small></div>'+chip(s.status)+'</div>'+
+  var h='<div class="card"><div class="item" style="cursor:default"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.locationFull||s.location)+' · '+esc(s.loadClass)+'</small></div>'+chip(s.status)+'</div>'+
    '<label>'+t('kind')+'</label><select id="ik">'+kinds.map(function(k){return '<option value="'+k+'" '+(I.kind===k?'selected':'')+'>'+t(k)+'</option>';}).join('')+'</select>'+
    '<p class="muted" id="prog"></p>';
   Object.keys(groups).forEach(function(g){h+='<div class="gt">'+t('g_'+g)+'</div>'+groups[g].map(function(id){var a=I.answers[id]||'';
     return '<div class="ck"><div>'+esc(ck(id))+'</div><div class="opts">'+[['P','pass'],['F','fail'],['N','na']].map(function(o){return '<label class="'+(a===o[0]?'sel'+o[0]:'')+'"><input type="radio" name="r_'+id+'" value="'+o[0]+'" data-ck="'+id+'" '+(a===o[0]?'checked':'')+'><span>'+t(o[1])+'</span></label>';}).join('')+'</div>'+
      '<div class="cm" id="cm_'+id+'" style="display:'+(a==='F'?'block':'none')+'"><input data-cm="'+id+'" placeholder="'+t('comment')+'" value="'+esc(I.comments[id]||'')+'"></div></div>';}).join('');});
-  h+='<label>'+t('overall')+'</label><textarea id="ov">'+esc(I.overall||'')+'</textarea>';
+  if(I.kind==='Handover'){h+='<label>'+t('subLoc')+' ('+t('required')+')</label><input id="isl" maxlength="80" placeholder="'+t('subLocPh')+'" value="'+esc(I.subLoc!==undefined?I.subLoc:(s.subLocation||''))+'">';}
+  h+='<label>'+t('overall')+' ('+t('required')+')</label><textarea id="ov">'+esc(I.overall||'')+'</textarea>';
   var needF=I.kind==='Handover',needB=I.kind!=='Handover';
   h+='<label>'+t('photoFront')+(needF?' ('+t('required')+')':'')+'</label><input type="file" accept="image/*" capture="environment" id="pf"><img class="pv" id="pfv" style="display:'+(I.front?'block':'none')+'" src="'+(I.front||'')+'">';
   h+='<label>'+t('photoBack')+(needB?' ('+t('required')+')':'')+'</label><input type="file" accept="image/*" capture="environment" id="pb"><img class="pv" id="pbv" style="display:'+(I.back?'block':'none')+'" src="'+(I.back||'')+'">';
@@ -292,16 +293,19 @@ function vInsp(el,pre){
   el.querySelectorAll('input[data-ck]').forEach(function(r){r.onchange=function(){var id=r.getAttribute('data-ck');I.answers[id]=r.value;r.closest('.opts').querySelectorAll('label').forEach(function(l){l.className='';});r.closest('label').className='sel'+r.value;$('cm_'+id).style.display=r.value==='F'?'block':'none';prog();};});
   el.querySelectorAll('input[data-cm]').forEach(function(r){r.oninput=function(){I.comments[r.getAttribute('data-cm')]=r.value;};});
   $('ov').oninput=function(){I.overall=this.value;};
+  if($('isl'))$('isl').oninput=function(){I.subLoc=this.value;};
   function ph(inp,key,prev){inp.onchange=function(){var f=inp.files[0];if(!f)return;compress(f).then(function(d){I[key]=d;$(prev).src=d;$(prev).style.display='block';}).catch(function(e){toast(e.message,1);});};}
   ph($('pf'),'front','pfv');ph($('pb'),'back','pbv');
   $('cx').onclick=function(){S.insp=null;vInsp(el);};
   $('go').onclick=function(){var b=this;
    var miss=ids.filter(function(id){return !I.answers[id];});if(miss.length){toast(miss.length+' '+t('required'),1);return;}
    var bad=ids.filter(function(id){return I.answers[id]==='F'&&!(I.comments[id]||'').trim();});if(bad.length){toast(t('comment')+': '+bad.join(', '),1);return;}
+   if(I.kind==='Handover'&&!(I.subLoc!==undefined?I.subLoc:(s.subLocation||'')).trim()){toast(t('subLoc')+' ('+t('required')+')',1);return;}
+   if(!(I.overall||'').trim()){toast(t('overall')+' ('+t('required')+')',1);return;}
    if(needF&&!I.front){toast(t('photoFront')+' ('+t('required')+')',1);return;}
    if(needB&&!I.back){toast(t('photoBack')+' ('+t('required')+')',1);return;}
    b.disabled=true;toast(t('uploading'));
-   api('submitInspection',{refId:I.refId,kind:I.kind,answers:I.answers,comments:I.comments,overall:I.overall||'',photoFront:I.front,photoBack:I.back})
+   api('submitInspection',{refId:I.refId,kind:I.kind,answers:I.answers,comments:I.comments,overall:I.overall||'',subLocation:I.kind==='Handover'?(I.subLoc!==undefined?I.subLoc:(s.subLocation||'')):'',photoFront:I.front,photoBack:I.back})
     .then(function(j){S.insp=null;return refresh().then(function(){toast(j.result==='Pass'?t('resultPass')+': '+fd(j.nextDueDate):t('resultFail'),j.result!=='Pass');S.tab='scaf';render();});})
     .catch(function(x){toast(x.message,1);b.disabled=false;});};
 }
@@ -388,12 +392,18 @@ function vRem(el){
 }
 function vAdmin(el){
   var types=S.cfg.types.map(function(x){return x.k+':'+x.label;}).join('|');
-  el.innerHTML='<h2>'+t('settings')+'</h2><div class="card"><form id="cf"><label>'+t('interval')+'</label><input name="intervalDays" type="number" min="1" max="31" value="'+S.cfg.intervalDays+'"><label>'+t('contractors')+'</label><input name="contractors" value="'+esc(S.cfg.contractors.join(','))+'"><label>'+t('types')+'</label><input name="types" value="'+esc(types)+'"><p><button class="btn" type="submit">'+t('save')+'</button></p></form></div>'+
+  el.innerHTML='<h2>'+t('settings')+'</h2><div class="card"><form id="cf"><label>'+t('interval')+'</label><input name="intervalDays" type="number" min="1" max="31" value="'+S.cfg.intervalDays+'"><label>'+t('contractors')+'</label><input name="contractors" value="'+esc(S.cfg.contractors.join(','))+'"><label>'+t('types')+'</label><input name="types" value="'+esc(types)+'"><label>'+t('locList')+'</label><textarea name="mainLocations" id="ml" rows="8">'+esc(S.cfg.mainLocations.join('\n'))+'</textarea><p><button class="btn sec" type="button" id="msync">'+t('syncUauc')+'</button> <span class="muted" id="msst"></span></p><p><button class="btn" type="submit">'+t('save')+'</button></p></form></div>'+
    '<h2>'+t('users')+'</h2>'+S.users.map(function(u){return '<div class="item" data-user="'+esc(u.email)+'"><div><span class="id">'+esc(u.name)+'</span><small>'+esc(u.email)+' · '+esc(u.role)+(u.contractor?' · '+esc(u.contractor):'')+'</small></div>'+(u.active==='FALSE'?'<span class="chip c-Dismantled">off</span>':'')+'</div>';}).join('')+
    '<p><button class="btn" id="au">'+t('addUser')+'</button></p>';
   $('cf').onsubmit=function(e){e.preventDefault();var d={};new FormData(e.target).forEach(function(v,k){d[k]=v;});api('saveConfig',d).then(function(){return refresh();}).then(function(){toast(t('save'));render();}).catch(function(x){toast(x.message,1);});};
   $('au').onclick=function(){userForm(null);};
+  $('msync').onclick=function(){$('msst').textContent='…';fetchUauc().then(function(l){$('ml').value=l.join('\n');$('msst').textContent=l.length+' '+t('locFound');}).catch(function(){$('msst').textContent=t('syncFail');});};
 }
+var UAUC_URL='https://iggifernandes.github.io/EcoOils-Project-UAUC-Report/';
+function fetchUauc(){return fetch(UAUC_URL+'?_='+Date.now()).then(function(r){if(!r.ok)throw new Error('http');return r.text();}).then(function(h){
+  var m=/var LOCATIONS=\[([^\]]*)\]/.exec(h);if(!m)throw new Error('nolist');
+  var out=[],re=/'([^']+)'/g,x;while((x=re.exec(m[1])))out.push(x[1].trim());
+  if(out.length<5)throw new Error('short');return out;});}
 function userForm(email){
   var u=email?S.users.filter(function(x){return x.email===email;})[0]:{role:'inspector',active:'TRUE'};
   var m=modal('<form id="uf"><h2>'+t('addUser')+'</h2><label>'+t('email')+'</label><input name="email" type="email" value="'+esc(u.email||'')+'" '+(email?'readonly':'')+' required><label>'+t('name')+'</label><input name="name" value="'+esc(u.name||'')+'">'+
@@ -409,7 +419,7 @@ function showPhoto(id){var m=modal('<p class="muted">'+t('loading')+'</p><p><but
 function scafDetail(refId){
   var s=S.scf.filter(function(x){return x.refId===refId;})[0];if(!s)return;
   var m=modal('<h2 style="margin-top:0">'+esc(s.refId)+' '+chip(s.status)+'</h2><table>'+
-   [['contractor',s.contractor],['type',s.type+' · '+typeLabel(s.type)],['location',s.location],['requestedBy',s.requestedBy],['builtBy',s.builtByName],['erected',fd(s.erectedDate)],['loadClass',s.loadClass+(s.loadKg?' ('+s.loadKg+' kg/m²)':'')],['lastInsp',fd(s.lastInspectionDate)],['nextDue',fd(s.nextDueDate)],['inspector',s.inspector||'—']].map(function(r){return '<tr><td class="muted">'+t(r[0])+'</td><td>'+esc(r[1])+'</td></tr>';}).join('')+'</table>'+
+   [['contractor',s.contractor],['type',s.type+' · '+typeLabel(s.type)],['mainLoc',s.location],['subLoc',s.subLocation||'—'],['requestedBy',s.requestedBy],['builtBy',s.builtByName],['erected',fd(s.erectedDate)],['loadClass',s.loadClass+(s.loadKg?' ('+s.loadKg+' kg/m²)':'')],['lastInsp',fd(s.lastInspectionDate)],['nextDue',fd(s.nextDueDate)],['inspector',s.inspector||'—']].map(function(r){return '<tr><td class="muted">'+t(r[0])+'</td><td>'+esc(r[1])+'</td></tr>';}).join('')+'</table>'+
    '<p>'+(s.tagFrontId?'<button class="btn sec sm" data-photo="'+esc(s.tagFrontId)+'">'+t('front')+'</button> ':'')+(s.tagBackId?'<button class="btn sec sm" data-photo="'+esc(s.tagBackId)+'">'+t('back')+'</button> ':'')+'</p>'+
    '<p>'+((s.rawStatus!=='Dismantled'&&can('inspect'))?'<button class="btn" id="di">'+t('inspectNow')+'</button> ':'')+((s.rawStatus!=='Dismantled'&&role()!=='viewer')?'<button class="btn red sm" id="dd">'+t('dismantle')+'</button> ':'')+'<button class="btn sec sm" id="dx">'+t('close')+'</button></p>'+
    '<h2>'+t('history')+'</h2><div id="hs"><p class="muted">'+t('loading')+'</p></div>');

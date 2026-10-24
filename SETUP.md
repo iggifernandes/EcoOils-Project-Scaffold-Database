@@ -1,5 +1,12 @@
-SCAFFOLD INSPECTION DATABASE v1.1.1 — GO-LIVE GUIDE
+SCAFFOLD INSPECTION DATABASE v1.1.3 — GO-LIVE GUIDE
 =====================================================
+
+WHAT IS NEW IN v1.1.3
+• Main Location is now a dropdown of the 35 locations from the UA/UC Report app (preloaded). Admin > Settings > Main locations lets you edit the list, or press "Sync from UA/UC Report app" to pull the latest list and then Save.
+• Sub Location is entered by the INSPECTOR at the Handover inspection (required). It then shows next to the main location everywhere (lists, detail, CSV, reminders).
+• All fields are mandatory: new scaffold (main location, requested by, built by, date, load class, notes), Handover sub location, and overall comments on every inspection. Checklist items, tag photos and failed-item comments were already required.
+• Upgrade: paste the new Code.gs, run setup once (adds the new column and location list), Deploy > Manage deployments > New version. Replace index.html on GitHub (done for you), hard-refresh.
+• Existing scaffolds keep their old location text as Main Location; their Sub Location stays empty.
 
 UPGRADING FROM v1.0.0 (already pasted the old Code.gs)
 • Apps Script: select all in Code.gs, paste the new Code.gs, save. Run setup again (safe to repeat: it adds the new Scaffolders tab and keeps your data).
@@ -31,7 +38,7 @@ STEP 1 — Backend (about 10 minutes). Use your PERSONAL Gmail, not the work ema
 • Create a Google Sheet named "EcoOils Scaffold Database".
 • Extensions > Apps Script. Delete the default code and paste all of Code.gs.
 • Project Settings (gear icon) > tick "Show appsscript.json manifest file in editor". Open appsscript.json and paste the contents of the supplied appsscript.json.
-• In Code.gs, check ADMIN_EMAIL (line 7). Set it to the email you will log in with. Keep the straight quotes and the semicolon. Save.
+• In Code.gs, check ADMIN_EMAIL (line 7). It is already set to Ignatius.Ambrosio@ecooils.com.my; change it only if you want to log in with another email. Keep the straight quotes and the semicolon. Save.
 • Select the function setup in the toolbar and press Run. Approve the permissions (Sheets, Drive, Gmail send, triggers). This creates all tabs, the Drive photo folder, and the 07:00 daily reminder trigger.
 • Deploy > New deployment > type Web app > Execute as: Me > Who has access: Anyone > Deploy. Copy the Web app URL (ends in /exec).
 
