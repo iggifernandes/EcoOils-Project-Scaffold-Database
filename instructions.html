@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Working at Height Database – Instructions</title>
+<title>Scaffold Compliance Hub – Instructions</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -30,14 +30,14 @@ a.btn{display:inline-block;margin-top:10px;background:var(--ink);color:#fff;padd
 <header><div><h1 id="h1"></h1></div><div class="tr"><span class="ver" id="ver"></span><span class="lang" id="lang"></span></div></header>
 <main id="m"></main>
 <script>
-var VERSION='1.1.4',APP='./';
+var VERSION='1.1.5',APP='./';
 var T={
-en:{ver:'Version',title:'Working at Height Database',sub:'Instructions',
+en:{ver:'Version',title:'Scaffold Compliance Hub',sub:'Instructions',
 intro:'This database keeps everything about working at height on the Mentari Project in one place: scaffolds, the people who build them, their training, and the harnesses they wear. Data is owned and kept up to date by the contractors (IC) HSSE and the scaffold inspector, not by one central person.',
 modH:'The four parts',live:'Live',plan:'Planned',
 mods:[['1. Scaffold inventory and inspection','Every scaffold gets a unique ID, a main location (UA/UC list) and a sub location, a signed tag photo, and weekly inspections with reminders.','live'],
 ['2. Scaffolders and certificates (external)','Names, role, external certificate (type, number, issue, expiry), photo of the person and of the certificate. Expiry reminders at 30/14/7/1/0 days.','live'],
-['3. Working at Height training (internal)','Record of who completed the internal Working at Height training: date, trainer, validity and refresher due date.','plan'],
+['3. Internal Working at Height training (scaffolders only)','Record of the internal Working at Height training of scaffolders and scaffolding supervisors: date, trainer, validity and refresher due date. Training of other crew is not kept here.','plan'],
 ['4. Full body harness registry and inspection','Each harness has a serial number, owner contractor and user, and a record of every inspection by HSSE and the scaffolding supervisor. Defective harness is tagged Do not use.','plan']],
 whoH:'Who does what',
 roles:[['Mentari HSSE (admin)','Oversight only: settings, user list, location list, all contractors. Does not enter contractor data day to day.'],
@@ -70,9 +70,9 @@ procs:[['Scaffold (live)',['Supervisor or IC HSSE registers the scaffold: contra
 ruleH:'Rules to remember',
 rules:['Nobody uses a scaffold until the Handover inspection is passed and the signed tag photo is uploaded.','Only an approved supervisor with a valid certificate, from the same contractor, can be named as the builder.','Every failed item needs a comment. Overall comments are required on every inspection (write None if nothing to add).','Sign in with your own email and the 6-digit code. Do not share codes.','If a person leaves or a certificate lapses, IC HSSE updates the record the same day.'],
 decH:'Decisions needed from Iggy',
-decs:['Confirm the new name: Working at Height Database (proposal).','Confirm the access table above, in particular what IC HSSE may do and what the scaffolding supervisor may not.','Confirm harness inspection frequency and checklist (Shell / Mentari standard).','Confirm Working at Height training fields: provider, validity period, refresher interval.'],
+decs:['Name confirmed: Scaffold Compliance Hub.','Confirm the access table above, in particular what IC HSSE may do and what the scaffolding supervisor may not.','Confirm harness inspection frequency and checklist (Shell / Mentari standard).','Confirm Working at Height training fields: provider, validity period, refresher interval.'],
 open:'Open the app'},
-id:{ver:'Versi',title:'Database Bekerja di Ketinggian',sub:'Petunjuk',
+id:{ver:'Versi',title:'Hub Kepatuhan Perancah',sub:'Petunjuk',
 intro:'Database ini menyimpan semua hal tentang bekerja di ketinggian di Proyek Mentari di satu tempat: perancah, orang yang membangunnya, pelatihan mereka, dan full body harness yang dipakai. Data dimiliki dan diperbarui oleh HSSE kontraktor (IC) dan inspektur perancah, bukan oleh satu orang pusat.',
 modH:'Empat bagian',live:'Aktif',plan:'Direncanakan',
 mods:[['1. Inventaris dan inspeksi perancah','Setiap perancah mendapat ID unik, lokasi utama (daftar UA/UC) dan sub lokasi, foto tag bertanda tangan, dan inspeksi mingguan dengan pengingat.','live'],
@@ -110,9 +110,9 @@ procs:[['Perancah (aktif)',['Supervisor atau HSSE IC mendaftarkan perancah: kont
 ruleH:'Aturan yang harus diingat',
 rules:['Tidak ada yang memakai perancah sebelum inspeksi serah terima lulus dan foto tag bertanda tangan diunggah.','Hanya supervisor disetujui dengan sertifikat berlaku, dari kontraktor yang sama, yang boleh disebut sebagai pembangun.','Setiap butir gagal perlu komentar. Komentar umum wajib di setiap inspeksi (tulis Tidak ada jika tidak ada tambahan).','Masuk dengan email Anda sendiri dan kode 6 digit. Jangan bagikan kode.','Jika seseorang pergi atau sertifikat habis, HSSE IC memperbarui data di hari yang sama.'],
 decH:'Keputusan yang dibutuhkan dari Iggy',
-decs:['Konfirmasi nama baru: Database Bekerja di Ketinggian (usulan).','Konfirmasi tabel akses di atas, terutama apa yang boleh dilakukan HSSE IC dan yang tidak boleh dilakukan supervisor perancah.','Konfirmasi frekuensi dan daftar periksa inspeksi harness (standar Shell / Mentari).','Konfirmasi kolom pelatihan Bekerja di Ketinggian: penyelenggara, masa berlaku, interval penyegaran.'],
+decs:['Nama sudah dikonfirmasi: Hub Kepatuhan Perancah.','Konfirmasi tabel akses di atas, terutama apa yang boleh dilakukan HSSE IC dan yang tidak boleh dilakukan supervisor perancah.','Konfirmasi frekuensi dan daftar periksa inspeksi harness (standar Shell / Mentari).','Konfirmasi kolom pelatihan Bekerja di Ketinggian: penyelenggara, masa berlaku, interval penyegaran.'],
 open:'Buka aplikasi'},
-ms:{ver:'Versi',title:'Pangkalan Data Kerja di Ketinggian',sub:'Arahan',
+ms:{ver:'Versi',title:'Hab Pematuhan Perancah',sub:'Arahan',
 intro:'Pangkalan data ini menyimpan semua perkara tentang kerja di ketinggian di Projek Mentari di satu tempat: perancah, orang yang membinanya, latihan mereka, dan full body harness yang dipakai. Data dimiliki dan dikemas kini oleh HSSE kontraktor (IC) dan pemeriksa perancah, bukan oleh seorang pusat.',
 modH:'Empat bahagian',live:'Aktif',plan:'Dirancang',
 mods:[['1. Inventori dan pemeriksaan perancah','Setiap perancah mendapat ID unik, lokasi utama (senarai UA/UC) dan sub lokasi, foto tag bertandatangan, dan pemeriksaan mingguan dengan peringatan.','live'],
@@ -150,7 +150,7 @@ procs:[['Perancah (aktif)',['Penyelia atau HSSE IC mendaftar perancah: kontrakto
 ruleH:'Peraturan untuk diingat',
 rules:['Tiada sesiapa menggunakan perancah sebelum pemeriksaan serah terima lulus dan foto tag bertandatangan dimuat naik.','Hanya penyelia diluluskan dengan sijil sah, daripada kontraktor yang sama, boleh dinamakan sebagai pembina.','Setiap item gagal perlu komen. Komen keseluruhan wajib pada setiap pemeriksaan (tulis Tiada jika tiada tambahan).','Log masuk dengan e-mel anda sendiri dan kod 6 digit. Jangan kongsi kod.','Jika seseorang berhenti atau sijil tamat, HSSE IC mengemas kini rekod pada hari yang sama.'],
 decH:'Keputusan diperlukan daripada Iggy',
-decs:['Sahkan nama baharu: Pangkalan Data Kerja di Ketinggian (cadangan).','Sahkan jadual akses di atas, terutamanya apa yang HSSE IC boleh buat dan yang penyelia perancah tidak boleh.','Sahkan kekerapan dan senarai semak pemeriksaan harness (standard Shell / Mentari).','Sahkan medan latihan Kerja di Ketinggian: penyedia, tempoh sah, selang penyegaran.'],
+decs:['Nama telah disahkan: Hab Pematuhan Perancah.','Sahkan jadual akses di atas, terutamanya apa yang HSSE IC boleh buat dan yang penyelia perancah tidak boleh.','Sahkan kekerapan dan senarai semak pemeriksaan harness (standard Shell / Mentari).','Sahkan medan latihan Kerja di Ketinggian: penyedia, tempoh sah, selang penyegaran.'],
 open:'Buka aplikasi'}};
 var lang='en';try{lang=localStorage.getItem('wah_lang')||'en';}catch(e){}
 if(!T[lang])lang='en';
