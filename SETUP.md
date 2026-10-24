@@ -1,6 +1,11 @@
 SCAFFOLD INSPECTION DATABASE v1.1.6 — GO-LIVE GUIDE
 =====================================================
 
+WHAT IS NEW IN v1.2.0
+• Red tag button on every scaffold (admin, inspector, supervisor of that contractor). Records date, time, who, reason and an optional photo; status becomes RED TAG · Do not use; supervisor, inspectors and admin are emailed; daily reminders continue until cleared.
+• A failed inspection red-tags automatically. Only an inspector/admin clears it: pass a re-inspection (auto-logged) or Remove red tag with a reason. Everything is kept in the new RedTags tab and shown as the red tag log on the scaffold.
+• Upgrade: paste Code.gs, run setup once, Deploy > Manage deployments > New version.
+
 WHAT IS NEW IN v1.1.6
 • Scaffolder Helper: needs Scaffolding Basic Awareness and Working at Height training (internal or external). No external certificate needed. Without both: "Training incomplete". Expiry reminders cover these trainings too.
 • Every certificate/training submission (scaffolders and supervisors, single or import) needs the tick "I have verified the certificate and all data is true and checked", then a confirmation pop-up.
