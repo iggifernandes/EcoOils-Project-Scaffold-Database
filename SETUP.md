@@ -1,5 +1,26 @@
-SCAFFOLD INSPECTION DATABASE v1.0.0 — GO-LIVE GUIDE
+SCAFFOLD INSPECTION DATABASE v1.1.1 — GO-LIVE GUIDE
 =====================================================
+
+UPGRADING FROM v1.0.0 (already pasted the old Code.gs)
+• Apps Script: select all in Code.gs, paste the new Code.gs, save. Run setup again (safe to repeat: it adds the new Scaffolders tab and keeps your data).
+• Deploy > Manage deployments > pencil icon > Version: New version > Deploy. The /exec URL stays the same.
+• GitHub: replace index.html with the new one and put your /exec URL in it again. Hard-refresh the site.
+
+FIXES IN v1.1.1
+• A scaffold that failed its handover can no longer be cleared with the short weekly checklist; it needs a full Handover pass first. Once passed, handover cannot be repeated.
+• Sheets no longer stop saving after 1000 rows (it would have failed after a few months of weekly inspections).
+• Login codes: one email per minute per address, so nobody can use up the daily mail quota.
+• Supervisors cannot start a handover (inspectors only) and now see a clear message instead of filling in 25 items first.
+• New-scaffold form warns when the contractor has no approved supervisor.
+• Photos upload no longer times out when several people save at once.
+• Moving a supervisor to another contractor also moves their login scope.
+• Readable error if the web app URL or access setting is wrong; Retry button on a network drop; answer highlighting works on older phone browsers.
+
+WHAT IS NEW IN v1.1.0
+• Scaffolders tab: the crew register. Name, contractor, grade, phone, certificate type / number / issue / expiry, photo of the scaffolder and photo of the certificate. Certificate fields can be empty for people without one yet; they show as "No certificate".
+• Admin adds or edits people one by one, or pastes a list under Import names (one per line: name, contractor, grade, phone, certType, certNo, issueDate, expiryDate).
+• Inspectors and viewers can see everyone; supervisors see their own contractor only; only admin sees phone numbers.
+• Certificate expiry reminders (30/14/7/1/0 days) now cover scaffolders as well as supervisors, and the daily digest lists expired certificates and, on Mondays, people with no certificate on file.
 
 Files
 • Code.gs         backend (Google Apps Script, bound to a Google Sheet)
@@ -10,7 +31,7 @@ STEP 1 — Backend (about 10 minutes). Use your PERSONAL Gmail, not the work ema
 • Create a Google Sheet named "EcoOils Scaffold Database".
 • Extensions > Apps Script. Delete the default code and paste all of Code.gs.
 • Project Settings (gear icon) > tick "Show appsscript.json manifest file in editor". Open appsscript.json and paste the contents of the supplied appsscript.json.
-• In Code.gs, set ADMIN_EMAIL (line 9) to the email you will log in with. Save.
+• In Code.gs, check ADMIN_EMAIL (line 7). Set it to the email you will log in with. Keep the straight quotes and the semicolon. Save.
 • Select the function setup in the toolbar and press Run. Approve the permissions (Sheets, Drive, Gmail send, triggers). This creates all tabs, the Drive photo folder, and the 07:00 daily reminder trigger.
 • Deploy > New deployment > type Web app > Execute as: Me > Who has access: Anyone > Deploy. Copy the Web app URL (ends in /exec).
 

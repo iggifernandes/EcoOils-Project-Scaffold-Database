@@ -39,7 +39,7 @@ textarea{min-height:64px}
 .btn:disabled{opacity:.5;cursor:wait}
 .chip{display:inline-block;padding:2px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;border:1px solid;white-space:nowrap}
 .c-Active,.c-Approved,.c-Pass{color:var(--ok);border-color:var(--ok)}
-.c-Pending{color:var(--warn);border-color:var(--warn)}
+.c-Pending,.c-NoCert{color:var(--warn);border-color:var(--warn)}
 .c-Overdue,.c-DoNotUse,.c-Expired,.c-Fail,.c-Suspended{color:var(--r);border-color:var(--r)}
 .c-Dismantled{color:var(--g2);border-color:var(--g2)}
 .item{background:#fff;border:1px solid var(--line);padding:11px 12px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center}
@@ -53,9 +53,9 @@ textarea{min-height:64px}
 .ck .opts label{margin:0;flex:1;text-align:center;border:1px solid #cfcfcf;padding:7px 4px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)}
 .ck input[type=radio]{display:none}
 .ck input[type=radio]:checked+span{font-weight:600}
-.ck .opts label:has(input[value=P]:checked){background:#e6f3e7;border-color:var(--ok)}
-.ck .opts label:has(input[value=F]:checked){background:#fde8e8;border-color:var(--r)}
-.ck .opts label:has(input[value=N]:checked){background:#eee}
+.ck .opts label.selP{background:#e6f3e7;border-color:var(--ok)}
+.ck .opts label.selF{background:#fde8e8;border-color:var(--r)}
+.ck .opts label.selN{background:#eee}
 .ck .cm{display:none;margin-top:6px}
 .gt{font-weight:500;text-transform:uppercase;letter-spacing:.12em;font-size:12px;color:var(--g);margin:16px 0 0}
 .big{font-size:26px;font-weight:500;letter-spacing:.06em;text-align:center;padding:14px;border:2px dashed var(--ink);margin:12px 0;word-break:break-all}
@@ -73,13 +73,13 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{text-align:left;p
 'use strict';
 /* ================= CONFIG ================= */
 var API_URL = 'PASTE_APPS_SCRIPT_WEB_APP_URL_HERE';
-var VERSION = '1.0.0';
+var VERSION = '1.1.1';
 
 /* ================= i18n ================= */
 var L = {
 en:{title:'Scaffold Inspection Register',version:'Version',login:'Log in',email:'Email',sendCode:'Send code',code:'6-digit code',verify:'Verify',keep:'Keep me logged in',logout:'Log out',
  codeSent:'If this email is registered, a code was sent.',setupApi:'Paste the Apps Script web app URL',save:'Save',cancel:'Cancel',close:'Close',submit:'Submit',add:'Add',edit:'Edit',view:'View',loading:'Loading…',
- t_dash:'Dashboard',t_scaf:'Scaffolds',t_new:'New scaffold',t_insp:'Inspect',t_sup:'Supervisors',t_rem:'Reminders',t_admin:'Admin',
+ t_dash:'Dashboard',t_scaf:'Scaffolds',t_new:'New scaffold',t_insp:'Inspect',t_sup:'Supervisors',t_rem:'Reminders',t_crew:'Scaffolders',addCrew:'Add scaffolder',importCrew:'Import names',crewRole:'Grade / role',crewPhoto:'Photo of scaffolder',NoCert:'No certificate',crewImportHelp:'One per line: name, contractor, grade, phone, certType, certNo, issueDate, expiryDate (certificate columns may be left empty)',certOptional:'Leave the certificate fields empty if not yet available.',total:'Total',crewNoPhoto:'No photo',waitInspector:'Waiting for the inspector: the handover inspection must be done by an inspector.',noSup:'No approved supervisor for this contractor. Add or renew one first.',t_admin:'Admin',
  Active:'Active',Pending:'Pending',Overdue:'Overdue',DoNotUse:'Do not use',Dismantled:'Dismantled',Approved:'Approved',Expired:'Expired',Suspended:'Suspended',Pass:'Pass',Fail:'Fail',
  needsAction:'Needs action',certAlerts:'Supervisor certificates',failByC:'Failed inspections, last 90 days',none:'Nothing here.',
  contractor:'Contractor',type:'Scaffold type',location:'Location',requestedBy:'Requested by',builtBy:'Built by (approved supervisor)',erected:'Date erected',loadClass:'Load class',loadKg:'Load (kg/m²)',notes:'Notes',
@@ -95,7 +95,7 @@ en:{title:'Scaffold Inspection Register',version:'Version',login:'Log in',email:
  g_F:'Foundation',g_S:'Structure',g_P:'Platform',g_E:'Edge protection',g_A:'Access',g_V:'Environment & tag',g_W:'Weekly checks'},
 id:{title:'Register Inspeksi Scaffold',version:'Versi',login:'Masuk',email:'Email',sendCode:'Kirim kode',code:'Kode 6 digit',verify:'Verifikasi',keep:'Tetap masuk',logout:'Keluar',
  codeSent:'Jika email terdaftar, kode telah dikirim.',save:'Simpan',cancel:'Batal',close:'Tutup',submit:'Kirim',add:'Tambah',edit:'Ubah',view:'Lihat',loading:'Memuat…',
- t_dash:'Dasbor',t_scaf:'Scaffold',t_new:'Scaffold baru',t_insp:'Inspeksi',t_sup:'Supervisor',t_rem:'Pengingat',t_admin:'Admin',
+ t_dash:'Dasbor',t_scaf:'Scaffold',t_new:'Scaffold baru',t_insp:'Inspeksi',t_sup:'Supervisor',t_rem:'Pengingat',t_crew:'Scaffolder',addCrew:'Tambah scaffolder',importCrew:'Impor nama',crewRole:'Tingkat / peran',crewPhoto:'Foto scaffolder',NoCert:'Belum ada sertifikat',crewImportHelp:'Satu per baris: nama, kontraktor, tingkat, telepon, jenis sertifikat, no. sertifikat, tgl terbit, tgl berakhir (kolom sertifikat boleh kosong)',certOptional:'Kosongkan kolom sertifikat jika belum ada.',total:'Total',crewNoPhoto:'Tanpa foto',waitInspector:'Menunggu inspektur: inspeksi serah terima harus dilakukan oleh inspektur.',noSup:'Belum ada supervisor disetujui untuk kontraktor ini. Tambah atau perbarui dulu.',t_admin:'Admin',
  Active:'Aktif',Pending:'Menunggu',Overdue:'Terlambat',DoNotUse:'Dilarang dipakai',Dismantled:'Dibongkar',Approved:'Disetujui',Expired:'Kedaluwarsa',Suspended:'Ditangguhkan',Pass:'Lulus',Fail:'Gagal',
  needsAction:'Perlu tindakan',certAlerts:'Sertifikat supervisor',failByC:'Inspeksi gagal, 90 hari terakhir',none:'Tidak ada.',
  contractor:'Kontraktor',type:'Jenis scaffold',location:'Lokasi',requestedBy:'Diminta oleh',builtBy:'Dibangun oleh (supervisor disetujui)',erected:'Tanggal didirikan',loadClass:'Kelas beban',loadKg:'Beban (kg/m²)',notes:'Catatan',
@@ -111,7 +111,7 @@ id:{title:'Register Inspeksi Scaffold',version:'Versi',login:'Masuk',email:'Emai
  g_F:'Pondasi',g_S:'Struktur',g_P:'Platform',g_E:'Pagar pengaman',g_A:'Akses',g_V:'Lingkungan & tag',g_W:'Pemeriksaan mingguan'},
 ms:{title:'Daftar Pemeriksaan Perancah',version:'Versi',login:'Log masuk',email:'E-mel',sendCode:'Hantar kod',code:'Kod 6 digit',verify:'Sahkan',keep:'Kekalkan log masuk',logout:'Log keluar',
  codeSent:'Jika e-mel berdaftar, kod telah dihantar.',save:'Simpan',cancel:'Batal',close:'Tutup',submit:'Hantar',add:'Tambah',edit:'Ubah',view:'Lihat',loading:'Memuatkan…',
- t_dash:'Papan pemuka',t_scaf:'Perancah',t_new:'Perancah baharu',t_insp:'Pemeriksaan',t_sup:'Penyelia',t_rem:'Peringatan',t_admin:'Admin',
+ t_dash:'Papan pemuka',t_scaf:'Perancah',t_new:'Perancah baharu',t_insp:'Pemeriksaan',t_sup:'Penyelia',t_rem:'Peringatan',t_crew:'Pemasang perancah',addCrew:'Tambah pemasang perancah',importCrew:'Import nama',crewRole:'Gred / peranan',crewPhoto:'Foto pemasang perancah',NoCert:'Tiada sijil',crewImportHelp:'Satu setiap baris: nama, kontraktor, gred, telefon, jenis sijil, no. sijil, tarikh keluar, tarikh tamat (lajur sijil boleh kosong)',certOptional:'Kosongkan medan sijil jika belum ada.',total:'Jumlah',crewNoPhoto:'Tiada foto',waitInspector:'Menunggu pemeriksa: pemeriksaan serah terima mesti dibuat oleh pemeriksa.',noSup:'Tiada penyelia diluluskan untuk kontraktor ini. Tambah atau baharui dahulu.',t_admin:'Admin',
  Active:'Aktif',Pending:'Menunggu',Overdue:'Lewat',DoNotUse:'Dilarang guna',Dismantled:'Dibongkar',Approved:'Diluluskan',Expired:'Tamat tempoh',Suspended:'Digantung',Pass:'Lulus',Fail:'Gagal',
  needsAction:'Perlu tindakan',certAlerts:'Sijil penyelia',failByC:'Pemeriksaan gagal, 90 hari lepas',none:'Tiada.',
  contractor:'Kontraktor',type:'Jenis perancah',location:'Lokasi',requestedBy:'Dimohon oleh',builtBy:'Dibina oleh (penyelia diluluskan)',erected:'Tarikh didirikan',loadClass:'Kelas beban',loadKg:'Beban (kg/m²)',notes:'Nota',
@@ -151,7 +151,7 @@ ms:{F1:'Tanah kukuh dan rata, tiada bahagian lembut atau air bertakung',F2:'Plat
 };
 
 /* ================= state & helpers ================= */
-var S = {lang:localStorage.getItem('sc_lang')||'en',tab:'dash',user:null,cfg:null,scf:[],sup:[],users:[],wa:[],fail:{},filter:{q:'',c:'',s:''},insp:null,token:null};
+var S = {crew:[],cf:{q:'',c:''},lang:localStorage.getItem('sc_lang')||'en',tab:'dash',user:null,cfg:null,scf:[],sup:[],users:[],wa:[],fail:{},filter:{q:'',c:'',s:''},insp:null,token:null};
 function t(k){return (L[S.lang]&&L[S.lang][k])||L.en[k]||k;}
 function ck(k){return (CK[S.lang]&&CK[S.lang][k])||CK.en[k]||k;}
 function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -163,7 +163,8 @@ function toast(m,err){var d=document.createElement('div');d.className='toast'+(e
 function api(action,data){
   var body=Object.assign({action:action,token:S.token},data||{});
   return fetch(apiUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
-   .then(function(r){return r.json();})
+   .then(function(r){return r.text();})
+   .then(function(tx){var j;try{j=JSON.parse(tx);}catch(e){throw new Error('Cannot reach the server. Check the web app URL, and that access is set to Anyone.');}return j;})
    .then(function(j){if(!j.ok){if(j.error==='AUTH'){logout(true);throw new Error('Session expired');}throw new Error(j.error||'Error');}return j;});
 }
 function compress(file){return new Promise(function(res,rej){var img=new Image(),u=URL.createObjectURL(file);
@@ -177,23 +178,23 @@ function can(a){var r=role();var m={newScaffold:['admin','supervisor'],inspect:[
 /* ================= session ================= */
 function logout(silent){S.token=null;S.user=null;localStorage.removeItem('sc_tok');sessionStorage.removeItem('sc_tok');if(!silent||true)render();}
 function loadSession(){S.token=localStorage.getItem('sc_tok')||sessionStorage.getItem('sc_tok');}
-function refresh(){return api('listAll').then(function(j){S.user=j.user;S.cfg=j.cfg;S.scf=j.scaffolds;S.sup=j.supervisors;S.users=j.users;S.wa=j.wa;S.fail=j.failByContractor;S.today=j.today;});}
+function refresh(){return api('listAll').then(function(j){S.user=j.user;S.cfg=j.cfg;S.scf=j.scaffolds;S.sup=j.supervisors;S.crew=j.scaffolders||[];S.users=j.users;S.wa=j.wa;S.fail=j.failByContractor;S.today=j.today;});}
 
 /* ================= render shell ================= */
 function render(){
-  var app=$('app');
+  var app=$('app');document.documentElement.lang=S.lang;
   if(apiUrl().indexOf('http')!==0){app.innerHTML='<div class="login card"><h2>'+t('setupApi')+'</h2><input id="apiin" placeholder="https://script.google.com/macros/s/…/exec"><p><button class="btn" id="apisave">'+t('save')+'</button></p></div>';
     $('apisave').onclick=function(){localStorage.setItem('sc_api',$('apiin').value.trim());render();};return;}
   if(!S.token){renderLogin();return;}
-  if(!S.user){app.innerHTML='<main><p class="muted">'+t('loading')+'</p></main>';refresh().then(render).catch(function(e){toast(e.message,1);renderLogin();});return;}
+  if(!S.user){app.innerHTML='<main><p class="muted">'+t('loading')+'</p></main>';refresh().then(render).catch(function(e){if(!S.token){renderLogin();return;}app.innerHTML='<main><p style="color:var(--r)">'+esc(e.message)+'</p><button class="btn" id="retry">Retry</button></main>';$('retry').onclick=render;});return;}
   var tabs=[['dash','t_dash'],['scaf','t_scaf']];
   if(can('newScaffold'))tabs.push(['new','t_new']);
   if(can('inspect'))tabs.push(['insp','t_insp']);
-  tabs.push(['sup','t_sup']);
+  tabs.push(['sup','t_sup']);tabs.push(['crew','t_crew']);
   if(can('admin')){tabs.push(['rem','t_rem']);tabs.push(['admin','t_admin']);}
   app.innerHTML='<header><div><h1>'+t('title')+'</h1></div><div class="tr"><span class="ver">'+t('version')+' '+VERSION+'</span><span class="lang">'+['en','id','ms'].map(function(l){return '<button data-lang="'+l+'" class="'+(S.lang===l?'on':'')+'">'+l.toUpperCase()+'</button>';}).join('')+'</span><div class="who">'+esc(S.user.name)+' · '+esc(S.user.role)+'<a data-act="logout">'+t('logout')+'</a></div></div></header>'+
    '<nav>'+tabs.map(function(x){return '<button data-tab="'+x[0]+'" class="'+(S.tab===x[0]?'on':'')+'">'+t(x[1])+'</button>';}).join('')+'</nav><main id="view"></main>';
-  var v={dash:vDash,scaf:vScaf,'new':vNew,insp:vInsp,sup:vSup,rem:vRem,admin:vAdmin}[S.tab]||vDash;
+  var v={dash:vDash,scaf:vScaf,'new':vNew,insp:vInsp,sup:vSup,crew:vCrew,rem:vRem,admin:vAdmin}[S.tab]||vDash;
   v($('view'));
 }
 function renderLogin(){
@@ -214,13 +215,15 @@ function vDash(el){
   var need=S.scf.filter(function(s){return s.status==='Pending'||s.status==='Overdue'||s.status==='DoNotUse'||(s.status==='Active'&&s.daysToDue!==null&&s.daysToDue<=1);});
   h+='<h2>'+t('needsAction')+'</h2>'+(need.length?need.map(itemScaf).join(''):'<p class="muted">'+t('none')+'</p>');
   var ce=S.sup.filter(function(s){return s.approval!=='Suspended'&&(s.status==='Expired'||(s.daysLeft!==null&&s.daysLeft<=30));});
-  h+='<h2>'+t('certAlerts')+'</h2>'+(ce.length?ce.map(itemSup).join(''):'<p class="muted">'+t('none')+'</p>');
+  var cc=S.crew.filter(function(s){return s.approval!=='Suspended'&&(s.status==='Expired'||(s.daysLeft!==null&&s.daysLeft<=30));});
+  h+='<h2>'+t('certAlerts')+'</h2>'+((ce.length||cc.length)?ce.map(itemSup).join('')+cc.map(itemCrew).join(''):'<p class="muted">'+t('none')+'</p>');
   var fk=Object.keys(S.fail||{});h+='<h2>'+t('failByC')+'</h2>'+(fk.length?'<div class="card"><table>'+fk.map(function(k){return '<tr><td>'+esc(k)+'</td><td>'+S.fail[k]+'</td></tr>';}).join('')+'</table></div>':'<p class="muted">'+t('none')+'</p>');
   el.innerHTML=h;
 }
 function itemScaf(s){return '<div class="item" data-scaf="'+esc(s.refId)+'"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.location)+' · '+t('nextDue')+': '+fd(s.nextDueDate)+'</small></div>'+chip(s.status)+'</div>';}
 function itemSup(s){return '<div class="item" data-sup="'+esc(s.id)+'"><div><span class="id">'+esc(s.name)+'</span><small>'+esc(s.contractor)+' · '+esc(s.certType)+' '+esc(s.certNo)+' · '+fd(s.expiryDate)+(s.daysLeft!==null&&s.daysLeft>=0?' ('+s.daysLeft+' '+t('daysLeft')+')':'')+'</small></div>'+chip(s.approval==='Suspended'?'Suspended':s.status)+'</div>';}
 
+function itemCrew(s){return '<div class="item" data-crew="'+esc(s.id)+'"><div><span class="id">'+esc(s.name)+'</span><small>'+esc(s.contractor)+' · '+esc(s.role||'')+(s.certNo?' · '+esc(s.certType)+' '+esc(s.certNo)+' · '+fd(s.expiryDate)+(s.daysLeft!==null&&s.daysLeft>=0?' ('+s.daysLeft+' '+t('daysLeft')+')':''):'')+'</small></div>'+chip(s.status)+'</div>';}
 function filteredScf(){var f=S.filter,q=f.q.toLowerCase();return S.scf.filter(function(s){return (!f.c||s.contractor===f.c)&&(!f.s||s.status===f.s)&&(!q||(s.refId+' '+s.location).toLowerCase().indexOf(q)>=0);});}
 function vScaf(el){
   var f=S.filter;
@@ -243,9 +246,9 @@ function vNew(el){
    '<div class="row2"><div><label>'+t('erected')+'</label><input type="date" name="erectedDate" value="'+S.today+'" max="'+S.today+'"></div>'+
    '<div><label>'+t('loadClass')+'</label><select name="loadClass" id="lc">'+S.cfg.loadClasses.map(function(x){return '<option value="'+x.k+'">'+x.k+(x.kg?' ('+x.kg+' kg/m²)':'')+'</option>';}).join('')+'</select></div></div>'+
    '<div id="lk" style="display:none"><label>'+t('loadKg')+'</label><input type="number" name="loadKg" min="1"></div>'+
-   '<label>'+t('notes')+'</label><textarea name="notes"></textarea><p><button class="btn" type="submit">'+t('create')+'</button></p></form><div id="res"></div></div>';
+   '<label>'+t('notes')+'</label><textarea name="notes"></textarea><p id="nsw" style="color:var(--r);display:none">'+t('noSup')+'</p><p><button class="btn" type="submit" id="nsub">'+t('create')+'</button></p></form><div id="res"></div></div>';
   function fillSup(){var c=$('nc').value;var l=S.sup.filter(function(s){return s.contractor===c&&s.status==='Approved';});
-   $('nb').innerHTML=l.map(function(s){return '<option value="'+s.id+'">'+esc(s.name)+' · '+esc(s.certNo)+'</option>';}).join('')||'<option value="">—</option>';}
+   $('nb').innerHTML=l.map(function(s){return '<option value="'+s.id+'">'+esc(s.name)+' · '+esc(s.certNo)+'</option>';}).join('')||'<option value="">—</option>';$('nsw').style.display=l.length?'none':'block';$('nsub').disabled=!l.length;}
   fillSup();$('nc').onchange=fillSup;$('lc').onchange=function(){$('lk').style.display=this.value==='Special Purpose'?'block':'none';};
   $('nf').onsubmit=function(e){e.preventDefault();var f=e.target,b=f.querySelector('button');var d={};new FormData(f).forEach(function(v,k){d[k]=v;});b.disabled=true;
    api('createScaffold',d).then(function(j){return refresh().then(function(){
@@ -266,7 +269,8 @@ function vInsp(el,pre){
     return;
   }
   var s=S.scf.filter(function(x){return x.refId===I.refId;})[0];if(!s){S.insp=null;return vInsp(el);}
-  var kinds=s.rawStatus==='Pending'?['Handover']:(role()==='supervisor'?['Weekly']:['Weekly','Special']);
+  var kinds=!s.handoverDone?(role()==='supervisor'?[]:['Handover']):(role()==='supervisor'?['Weekly']:['Weekly','Special']);
+  if(!kinds.length){el.innerHTML='<div class="card"><div class="item" style="cursor:default"><div><span class="id">'+esc(s.refId)+'</span><small>'+esc(s.location)+'</small></div>'+chip(s.status)+'</div><p>'+t('waitInspector')+'</p><p><button class="btn sec" id="cx">'+t('cancel')+'</button></p></div>';$('cx').onclick=function(){S.insp=null;vInsp(el);};return;}
   if(!I.kind||kinds.indexOf(I.kind)<0)I.kind=kinds[0];
   var ids=S.cfg.checklists[I.kind];
   var groups={};ids.forEach(function(id){var g=id.charAt(0);(groups[g]=groups[g]||[]).push(id);});
@@ -274,7 +278,7 @@ function vInsp(el,pre){
    '<label>'+t('kind')+'</label><select id="ik">'+kinds.map(function(k){return '<option value="'+k+'" '+(I.kind===k?'selected':'')+'>'+t(k)+'</option>';}).join('')+'</select>'+
    '<p class="muted" id="prog"></p>';
   Object.keys(groups).forEach(function(g){h+='<div class="gt">'+t('g_'+g)+'</div>'+groups[g].map(function(id){var a=I.answers[id]||'';
-    return '<div class="ck"><div>'+esc(ck(id))+'</div><div class="opts">'+[['P','pass'],['F','fail'],['N','na']].map(function(o){return '<label><input type="radio" name="r_'+id+'" value="'+o[0]+'" data-ck="'+id+'" '+(a===o[0]?'checked':'')+'><span>'+t(o[1])+'</span></label>';}).join('')+'</div>'+
+    return '<div class="ck"><div>'+esc(ck(id))+'</div><div class="opts">'+[['P','pass'],['F','fail'],['N','na']].map(function(o){return '<label class="'+(a===o[0]?'sel'+o[0]:'')+'"><input type="radio" name="r_'+id+'" value="'+o[0]+'" data-ck="'+id+'" '+(a===o[0]?'checked':'')+'><span>'+t(o[1])+'</span></label>';}).join('')+'</div>'+
      '<div class="cm" id="cm_'+id+'" style="display:'+(a==='F'?'block':'none')+'"><input data-cm="'+id+'" placeholder="'+t('comment')+'" value="'+esc(I.comments[id]||'')+'"></div></div>';}).join('');});
   h+='<label>'+t('overall')+'</label><textarea id="ov">'+esc(I.overall||'')+'</textarea>';
   var needF=I.kind==='Handover',needB=I.kind!=='Handover';
@@ -285,7 +289,7 @@ function vInsp(el,pre){
   function prog(){var n=ids.filter(function(id){return I.answers[id];}).length;$('prog').textContent=n+' / '+ids.length+' '+t('answered');}
   prog();
   $('ik').onchange=function(){I.kind=this.value;I.answers={};I.comments={};vInsp(el);};
-  el.querySelectorAll('input[data-ck]').forEach(function(r){r.onchange=function(){var id=r.getAttribute('data-ck');I.answers[id]=r.value;$('cm_'+id).style.display=r.value==='F'?'block':'none';prog();};});
+  el.querySelectorAll('input[data-ck]').forEach(function(r){r.onchange=function(){var id=r.getAttribute('data-ck');I.answers[id]=r.value;r.closest('.opts').querySelectorAll('label').forEach(function(l){l.className='';});r.closest('label').className='sel'+r.value;$('cm_'+id).style.display=r.value==='F'?'block':'none';prog();};});
   el.querySelectorAll('input[data-cm]').forEach(function(r){r.oninput=function(){I.comments[r.getAttribute('data-cm')]=r.value;};});
   $('ov').oninput=function(){I.overall=this.value;};
   function ph(inp,key,prev){inp.onchange=function(){var f=inp.files[0];if(!f)return;compress(f).then(function(d){I[key]=d;$(prev).src=d;$(prev).style.display='block';}).catch(function(e){toast(e.message,1);});};}
@@ -308,6 +312,49 @@ function vSup(el){
   var l=S.sup.slice().sort(function(a,b){return (a.expiryDate||'').localeCompare(b.expiryDate||'');});
   h+=l.length?l.map(itemSup).join(''):'<p class="muted">'+t('none')+'</p>';el.innerHTML=h;
   if(admin){$('asup').onclick=function(){supForm(null);};$('isup').onclick=importForm;}
+}
+function vCrew(el){
+  var admin=can('admin'),f=S.cf;
+  var h=(admin?'<div class="bar"><button class="btn" id="acrew">'+t('addCrew')+'</button><button class="btn sec" id="icrew">'+t('importCrew')+'</button></div>':'')+
+   '<div class="bar"><input id="cq" placeholder="'+t('search')+'" value="'+esc(f.q)+'"><select id="cc"><option value="">'+t('contractor')+': '+t('all')+'</option>'+S.cfg.contractors.map(function(c){return '<option '+(f.c===c?'selected':'')+'>'+c+'</option>';}).join('')+'</select></div><p class="muted" id="cn"></p><div id="cl"></div>';
+  el.innerHTML=h;
+  function paint(){var q=f.q.toLowerCase();var l=S.crew.filter(function(s){return (!f.c||s.contractor===f.c)&&(!q||(s.name+' '+s.certNo).toLowerCase().indexOf(q)>=0);})
+    .sort(function(a,b){return (a.contractor+a.name).localeCompare(b.contractor+b.name);});
+   $('cn').textContent=t('total')+': '+l.length;$('cl').innerHTML=l.length?l.map(itemCrew).join(''):'<p class="muted">'+t('none')+'</p>';}
+  paint();$('cq').oninput=function(){f.q=this.value;paint();};$('cc').onchange=function(){f.c=this.value;paint();};
+  if(admin){$('acrew').onclick=function(){crewForm(null);};$('icrew').onclick=crewImport;}
+}
+function crewForm(id){
+  var s=id?S.crew.filter(function(x){return x.id===id;})[0]:{};var ph=null,cph=null;
+  var m=modal('<form id="crf"><h2>'+(id?t('edit'):t('addCrew'))+'</h2><label>'+t('name')+'</label><input name="name" value="'+esc(s.name)+'" required>'+
+   '<div class="row2"><div><label>'+t('contractor')+'</label><select name="contractor">'+S.cfg.contractors.map(function(c){return '<option '+(s.contractor===c?'selected':'')+'>'+c+'</option>';}).join('')+'</select></div>'+
+   '<div><label>'+t('crewRole')+'</label><input name="role" list="roles" value="'+esc(s.role||'Scaffolder')+'"><datalist id="roles"><option>Scaffolder</option><option>Scaffolder Leader</option><option>Basic Scaffolder</option><option>Trainee</option></datalist></div></div>'+
+   '<label>'+t('phone')+'</label><input name="phone" value="'+esc(s.phone||'')+'" placeholder="08xxxxxxxxxx">'+
+   '<p class="muted">'+t('certOptional')+'</p><div class="row2"><div><label>'+t('certType')+'</label><input name="certType" value="'+esc(s.certType||'')+'"></div><div><label>'+t('certNo')+'</label><input name="certNo" value="'+esc(s.certNo||'')+'"></div></div>'+
+   '<div class="row2"><div><label>'+t('issue')+'</label><input type="date" name="issueDate" value="'+esc(s.issueDate||'')+'"></div><div><label>'+t('expiry')+'</label><input type="date" name="expiryDate" value="'+esc(s.expiryDate||'')+'"></div></div>'+
+   '<label>'+t('approval')+'</label><select name="approval"><option value="Approved" '+(s.approval!=='Suspended'?'selected':'')+'>'+t('Approved')+'</option><option value="Suspended" '+(s.approval==='Suspended'?'selected':'')+'>'+t('Suspended')+'</option></select>'+
+   '<label>'+t('crewPhoto')+'</label><input type="file" accept="image/*" id="phf"><img class="pv" id="phv" style="display:none">'+(s.photoId?'<p><button type="button" class="btn sec sm" data-photo="'+esc(s.photoId)+'">'+t('viewPhoto')+'</button></p>':'')+
+   '<label>'+t('certPhoto')+'</label><input type="file" accept="image/*" id="cpf"><img class="pv" id="cpv2" style="display:none">'+(s.certPhotoId?'<p><button type="button" class="btn sec sm" data-photo="'+esc(s.certPhotoId)+'">'+t('viewPhoto')+'</button></p>':'')+
+   '<label>'+t('notes')+'</label><textarea name="notes">'+esc(s.notes||'')+'</textarea><p><button class="btn" type="submit">'+t('save')+'</button> <button type="button" class="btn sec" id="x">'+t('cancel')+'</button></p></form>');
+  m.querySelector('#x').onclick=function(){m.remove();};
+  function pick(inp,prev,set){inp.onchange=function(){var f=inp.files[0];if(!f)return;compress(f).then(function(d){set(d);var p=m.querySelector(prev);p.src=d;p.style.display='block';}).catch(function(e){toast(e.message,1);});};}
+  pick(m.querySelector('#phf'),'#phv',function(d){ph=d;});pick(m.querySelector('#cpf'),'#cpv2',function(d){cph=d;});
+  m.querySelector('#crf').onsubmit=function(e){e.preventDefault();var d={id:id||undefined};new FormData(e.target).forEach(function(v,k){d[k]=v;});if(ph)d.photo=ph;if(cph)d.certPhoto=cph;var b=e.target.querySelector('button[type=submit]');b.disabled=true;toast(t('uploading'));
+   api('saveScaffolder',d).then(function(){return refresh();}).then(function(){m.remove();render();}).catch(function(x){toast(x.message,1);b.disabled=false;});};
+}
+function crewImport(){
+  var m=modal('<h2>'+t('importCrew')+'</h2><p class="muted">'+t('crewImportHelp')+'</p><textarea id="ta" style="min-height:160px"></textarea><p><button class="btn" id="go">'+t('importCrew')+'</button> <button class="btn sec" id="x">'+t('cancel')+'</button></p><div id="out"></div>');
+  m.querySelector('#x').onclick=function(){m.remove();};
+  m.querySelector('#go').onclick=function(){var rows=m.querySelector('#ta').value.split('\n').map(function(l){return l.trim();}).filter(Boolean).map(function(l){var p=l.split(/\t|;|,/).map(function(x){return x.trim();});
+    return {name:p[0],contractor:p[1],role:p[2],phone:p[3],certType:p[4],certNo:p[5],issueDate:normDate(p[6]),expiryDate:normDate(p[7])};});
+   api('importScaffolders',{rows:rows}).then(function(j){m.querySelector('#out').innerHTML='<p>'+t('imported')+': '+j.added+'</p>'+j.errors.map(function(e){return '<p style="color:var(--r)">'+esc(e)+'</p>';}).join('');return refresh();}).then(function(){render();}).catch(function(x){toast(x.message,1);});};
+}
+function crewView(id){
+  var s=S.crew.filter(function(x){return x.id===id;})[0];if(!s)return;
+  var m=modal('<h2 style="margin-top:0">'+esc(s.name)+' '+chip(s.status)+'</h2><table>'+[['contractor',s.contractor],['crewRole',s.role],['certType',s.certType||'—'],['certNo',s.certNo||'—'],['issue',fd(s.issueDate)],['expiry',fd(s.expiryDate)]].map(function(r){return '<tr><td class="muted">'+t(r[0])+'</td><td>'+esc(r[1])+'</td></tr>';}).join('')+'</table>'+
+   '<p>'+(s.photoId?'<button class="btn sec sm" data-photo="'+esc(s.photoId)+'">'+t('crewPhoto')+'</button> ':'')+(s.certPhotoId?'<button class="btn sec sm" data-photo="'+esc(s.certPhotoId)+'">'+t('certPhoto')+'</button> ':'')+'<button class="btn sec sm" id="x">'+t('close')+'</button></p>');
+  m.querySelector('#x').onclick=function(){m.remove();};
+  m.addEventListener('click',function(e){var p=e.target.getAttribute&&e.target.getAttribute('data-photo');if(p)showPhoto(p);});
 }
 function modal(html){var m=document.createElement('div');m.className='modal';m.innerHTML='<div>'+html+'</div>';document.body.appendChild(m);m.addEventListener('click',function(e){if(e.target===m)m.remove();});return m;}
 function supForm(id){
@@ -379,14 +426,15 @@ function scafDetail(refId){
 
 /* ================= events ================= */
 document.addEventListener('click',function(e){
-  var el=e.target.closest('[data-lang],[data-tab],[data-act],[data-scaf],[data-sup],[data-go],[data-inspect],[data-wasent],[data-user],[data-photo]');if(!el)return;
-  if(el.hasAttribute('data-photo')&&el.closest('.modal')&&!el.closest('#sf')){return;}
+  var el=e.target.closest('[data-lang],[data-tab],[data-act],[data-scaf],[data-sup],[data-crew],[data-go],[data-inspect],[data-wasent],[data-user],[data-photo]');if(!el)return;
+  if(el.hasAttribute('data-photo')&&el.closest('.modal')&&!el.closest('#sf,#crf')){return;}
   if(el.hasAttribute('data-photo')){showPhoto(el.getAttribute('data-photo'));return;}
   if(el.hasAttribute('data-lang')){S.lang=el.getAttribute('data-lang');localStorage.setItem('sc_lang',S.lang);document.documentElement.lang=S.lang;render();return;}
   if(el.hasAttribute('data-tab')){S.tab=el.getAttribute('data-tab');if(S.tab!=='insp')S.insp=null;render();return;}
   if(el.getAttribute('data-act')==='logout'){logout();return;}
   if(el.hasAttribute('data-scaf')){scafDetail(el.getAttribute('data-scaf'));return;}
   if(el.hasAttribute('data-sup')){if(can('admin'))supForm(el.getAttribute('data-sup'));else S.tab='sup',render();return;}
+  if(el.hasAttribute('data-crew')){if(can('admin'))crewForm(el.getAttribute('data-crew'));else crewView(el.getAttribute('data-crew'));return;}
   if(el.hasAttribute('data-go')){S.filter={q:'',c:'',s:el.getAttribute('data-go')};S.tab='scaf';render();return;}
   if(el.hasAttribute('data-inspect')){S.tab='insp';vInsp($('view'),el.getAttribute('data-inspect'));return;}
   if(el.hasAttribute('data-wasent')){api('waMark',{id:el.getAttribute('data-wasent')}).then(function(){return refresh();}).then(render).catch(function(x){toast(x.message,1);});return;}
