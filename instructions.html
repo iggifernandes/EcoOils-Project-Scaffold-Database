@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Working at Height Database – Instructions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--y:#FBCE07;--r:#DD1D21;--ink:#1c1c1c;--g:#6b6b6b;--line:#e3e3e3;--bg:#f6f6f6;--ok:#2e7d32}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Jost',system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.5}
+header{background:#fff;border-bottom:3px solid var(--y);padding:10px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+h1{font-weight:300;text-transform:uppercase;letter-spacing:.22em;color:var(--g);font-size:17px;margin:6px 0 0}
+.tr{text-align:right;font-size:12px;color:var(--g)}.ver{display:block;margin-bottom:3px;letter-spacing:.08em}
+.lang button{border:1px solid var(--line);background:#fff;padding:3px 8px;font:inherit;font-size:12px;cursor:pointer;color:var(--g)}
+.lang button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+main{max-width:980px;margin:0 auto;padding:16px}
+h2{font-weight:300;text-transform:uppercase;letter-spacing:.18em;color:var(--g);font-size:14px;margin:26px 0 8px}
+.card{background:#fff;border:1px solid var(--line);padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 4px;font-size:15px;font-weight:500}
+.tag{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;padding:2px 8px;border:1px solid var(--line);color:var(--g);margin-left:6px}
+.tag.live{color:var(--ok);border-color:var(--ok)}.tag.plan{color:#a67c00;border-color:var(--y)}
+ol,ul{margin:6px 0 0;padding-left:20px}li{margin:3px 0}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px;background:#fff}
+th,td{border:1px solid var(--line);padding:7px 8px;text-align:center;font-size:13px}
+th{font-weight:500;background:#fafafa;font-size:12px}td:first-child,th:first-child{text-align:left}
+.Y{color:var(--ok);font-weight:600}.O{color:#a67c00;font-weight:600}.V{color:var(--g)}.N{color:#bbb}
+.note{border-left:3px solid var(--y);background:#fffbe6;padding:8px 12px;margin:10px 0;font-size:14px}
+.legend{font-size:12px;color:var(--g);margin-top:6px}
+a.btn{display:inline-block;margin-top:10px;background:var(--ink);color:#fff;padding:9px 16px;text-decoration:none;text-transform:uppercase;letter-spacing:.1em;font-size:12px}
+</style></head><body>
+<header><div><h1 id="h1"></h1></div><div class="tr"><span class="ver" id="ver"></span><span class="lang" id="lang"></span></div></header>
+<main id="m"></main>
+<script>
+var VERSION='1.1.4',APP='./';
+var T={
+en:{ver:'Version',title:'Working at Height Database',sub:'Instructions',
+intro:'This database keeps everything about working at height on the Mentari Project in one place: scaffolds, the people who build them, their training, and the harnesses they wear. Data is owned and kept up to date by the contractors (IC) HSSE and the scaffold inspector, not by one central person.',
+modH:'The four parts',live:'Live',plan:'Planned',
+mods:[['1. Scaffold inventory and inspection','Every scaffold gets a unique ID, a main location (UA/UC list) and a sub location, a signed tag photo, and weekly inspections with reminders.','live'],
+['2. Scaffolders and certificates (external)','Names, role, external certificate (type, number, issue, expiry), photo of the person and of the certificate. Expiry reminders at 30/14/7/1/0 days.','live'],
+['3. Working at Height training (internal)','Record of who completed the internal Working at Height training: date, trainer, validity and refresher due date.','plan'],
+['4. Full body harness registry and inspection','Each harness has a serial number, owner contractor and user, and a record of every inspection by HSSE and the scaffolding supervisor. Defective harness is tagged Do not use.','plan']],
+whoH:'Who does what',
+roles:[['Mentari HSSE (admin)','Oversight only: settings, user list, location list, all contractors. Does not enter contractor data day to day.'],
+['IC HSSE (GSB, WEN, KKS, PBS)','Owner of the data for their own contractor: uploads supervisors, scaffolders, certificates, photos, training and harness records. Can register scaffolds and keep the register clean.'],
+['Scaffold inspector','Owner of the inspection record. Does the Handover inspection (and enters the sub location), Special inspections and re-inspection after a fail. Sees all contractors.'],
+['Scaffolding supervisor','Registers new scaffolds, does the weekly scaffold inspection and the harness inspections of the crew. Sees own contractor only. Cannot edit certificates or registers.'],
+['Viewer','Read only.']],
+accH:'Access (proposed)',accNote:'This table is the proposal. The "IC HSSE" role is new and still has to be added to the app: today the app only has admin, inspector, supervisor and viewer. Modules 3 and 4 are not built yet.',
+cols:['Mentari HSSE','IC HSSE','Scaffold inspector','Scaffolding supervisor','Viewer'],
+legend:'Yes = full · Own = own contractor only · View = read only · No = no access',
+Yn:'Yes',On:'Own',Vn:'View',Nn:'No',
+rows:[['See scaffolds and people','Y','O','Y','O','V'],
+['Upload / edit scaffolding supervisors and certificates','Y','O','N','N','N'],
+['Upload / edit scaffolders, certificates, photos','Y','O','N','V','V'],
+['Register a new scaffold','Y','O','N','O','N'],
+['Handover inspection and sub location','Y','N','Y','N','N'],
+['Weekly scaffold inspection','Y','O','Y','O','N'],
+['Special inspection / re-inspection after fail','Y','N','Y','N','N'],
+['Mark scaffold dismantled','Y','O','Y','O','N'],
+['Working at Height training records (planned)','Y','O','V','V','V'],
+['Harness registry: add / edit (planned)','Y','O','V','V','V'],
+['Harness inspection (planned)','Y','O','V','O','V'],
+['See phone numbers','Y','O','N','N','N'],
+['Settings, users, location list','Y','N','N','N','N']],
+procH:'How the process works',
+procs:[['Scaffold (live)',['Supervisor or IC HSSE registers the scaffold: contractor, type, main location from the list, requested by, built by (an approved supervisor), date erected, load class, notes. All fields are required.','The app gives the unique ID, for example PBS-T-2610-001 (contractor, type, year and month, running number). Status is Pending: do not use.','The scaffold inspector is notified, goes to site, enters the sub location, completes the full Handover checklist and uploads the photo of the signed tag (front).','If everything passes the scaffold becomes Active and the next inspection date is set. Any failed item makes it Do not use, and the supervisor is told.','Every week the supervisor or inspector does the weekly inspection and uploads the tag back (inspection grid) photo. The app reminds one day before and on the due day. Missed date = Overdue.','When the scaffold is taken down it is marked Dismantled and the record stays as history.']],
+['Scaffolders and certificates (live)',['IC HSSE adds each scaffolder: name, role, phone, photo of the person.','Add the external certificate: type, number, issue and expiry dates, and a photo of the certificate. Without a certificate the person shows as No certificate and is not counted as certified.','The app sends reminders before expiry. Renew the certificate and update the record and photo before the date.']],
+['Working at Height training (planned)',['IC HSSE records each internal training: person, date, trainer, validity.','The refresher due date drives the same reminders.']],
+['Harness (planned)',['IC HSSE registers each harness: serial number, manufacturer, date of manufacture, issue date, contractor, user.','The scaffolding supervisor inspects before use and records it. HSSE does the periodic inspection and records it. Inspection frequency and the checklist must be confirmed against the Shell / Mentari standard before go-live.','A harness that fails, or is past its life, is tagged Do not use and removed from service.']]],
+ruleH:'Rules to remember',
+rules:['Nobody uses a scaffold until the Handover inspection is passed and the signed tag photo is uploaded.','Only an approved supervisor with a valid certificate, from the same contractor, can be named as the builder.','Every failed item needs a comment. Overall comments are required on every inspection (write None if nothing to add).','Sign in with your own email and the 6-digit code. Do not share codes.','If a person leaves or a certificate lapses, IC HSSE updates the record the same day.'],
+decH:'Decisions needed from Iggy',
+decs:['Confirm the new name: Working at Height Database (proposal).','Confirm the access table above, in particular what IC HSSE may do and what the scaffolding supervisor may not.','Confirm harness inspection frequency and checklist (Shell / Mentari standard).','Confirm Working at Height training fields: provider, validity period, refresher interval.'],
+open:'Open the app'},
+id:{ver:'Versi',title:'Database Bekerja di Ketinggian',sub:'Petunjuk',
+intro:'Database ini menyimpan semua hal tentang bekerja di ketinggian di Proyek Mentari di satu tempat: perancah, orang yang membangunnya, pelatihan mereka, dan full body harness yang dipakai. Data dimiliki dan diperbarui oleh HSSE kontraktor (IC) dan inspektur perancah, bukan oleh satu orang pusat.',
+modH:'Empat bagian',live:'Aktif',plan:'Direncanakan',
+mods:[['1. Inventaris dan inspeksi perancah','Setiap perancah mendapat ID unik, lokasi utama (daftar UA/UC) dan sub lokasi, foto tag bertanda tangan, dan inspeksi mingguan dengan pengingat.','live'],
+['2. Scaffolder dan sertifikat (eksternal)','Nama, jabatan, sertifikat eksternal (jenis, nomor, tanggal terbit, kedaluwarsa), foto orang dan foto sertifikat. Pengingat kedaluwarsa pada 30/14/7/1/0 hari.','live'],
+['3. Pelatihan Bekerja di Ketinggian (internal)','Catatan siapa yang sudah menyelesaikan pelatihan internal Bekerja di Ketinggian: tanggal, pelatih, masa berlaku dan tanggal penyegaran.','plan'],
+['4. Registri dan inspeksi full body harness','Setiap harness punya nomor seri, kontraktor pemilik dan pemakai, serta catatan setiap inspeksi oleh HSSE dan supervisor perancah. Harness rusak diberi tag Jangan dipakai.','plan']],
+whoH:'Siapa melakukan apa',
+roles:[['HSSE Mentari (admin)','Hanya pengawasan: pengaturan, daftar pengguna, daftar lokasi, semua kontraktor. Tidak mengisi data kontraktor sehari-hari.'],
+['HSSE IC (GSB, WEN, KKS, PBS)','Pemilik data kontraktornya sendiri: mengunggah supervisor, scaffolder, sertifikat, foto, pelatihan dan data harness. Bisa mendaftarkan perancah dan menjaga register tetap bersih.'],
+['Inspektur perancah','Pemilik catatan inspeksi. Melakukan inspeksi serah terima (dan mengisi sub lokasi), inspeksi khusus dan inspeksi ulang setelah gagal. Melihat semua kontraktor.'],
+['Supervisor perancah','Mendaftarkan perancah baru, melakukan inspeksi mingguan perancah dan inspeksi harness krunya. Hanya melihat kontraktor sendiri. Tidak bisa mengubah sertifikat atau register.'],
+['Pemantau (viewer)','Hanya baca.']],
+accH:'Hak akses (usulan)',accNote:'Tabel ini adalah usulan. Peran "HSSE IC" baru dan masih harus ditambahkan ke aplikasi: saat ini aplikasi hanya punya admin, inspektur, supervisor dan viewer. Bagian 3 dan 4 belum dibuat.',
+cols:['HSSE Mentari','HSSE IC','Inspektur perancah','Supervisor perancah','Viewer'],
+legend:'Ya = penuh · Sendiri = hanya kontraktor sendiri · Lihat = hanya baca · Tidak = tanpa akses',
+Yn:'Ya',On:'Sendiri',Vn:'Lihat',Nn:'Tidak',
+rows:[['Melihat perancah dan orang','Y','O','Y','O','V'],
+['Unggah / ubah supervisor perancah dan sertifikat','Y','O','N','N','N'],
+['Unggah / ubah scaffolder, sertifikat, foto','Y','O','N','V','V'],
+['Mendaftarkan perancah baru','Y','O','N','O','N'],
+['Inspeksi serah terima dan sub lokasi','Y','N','Y','N','N'],
+['Inspeksi mingguan perancah','Y','O','Y','O','N'],
+['Inspeksi khusus / inspeksi ulang setelah gagal','Y','N','Y','N','N'],
+['Tandai perancah dibongkar','Y','O','Y','O','N'],
+['Catatan pelatihan Bekerja di Ketinggian (direncanakan)','Y','O','V','V','V'],
+['Registri harness: tambah / ubah (direncanakan)','Y','O','V','V','V'],
+['Inspeksi harness (direncanakan)','Y','O','V','O','V'],
+['Melihat nomor telepon','Y','O','N','N','N'],
+['Pengaturan, pengguna, daftar lokasi','Y','N','N','N','N']],
+procH:'Cara kerja prosesnya',
+procs:[['Perancah (aktif)',['Supervisor atau HSSE IC mendaftarkan perancah: kontraktor, jenis, lokasi utama dari daftar, diminta oleh, dibangun oleh (supervisor disetujui), tanggal didirikan, kelas beban, catatan. Semua kolom wajib diisi.','Aplikasi memberi ID unik, misalnya PBS-T-2610-001 (kontraktor, jenis, tahun dan bulan, nomor urut). Status Pending: jangan dipakai.','Inspektur perancah diberi tahu, datang ke lokasi, mengisi sub lokasi, mengisi daftar periksa serah terima lengkap dan mengunggah foto tag bertanda tangan (depan).','Jika semua lulus, perancah menjadi Aktif dan tanggal inspeksi berikutnya ditetapkan. Satu butir gagal membuatnya Jangan dipakai, dan supervisor diberi tahu.','Setiap minggu supervisor atau inspektur melakukan inspeksi mingguan dan mengunggah foto tag belakang (kisi inspeksi). Aplikasi mengingatkan sehari sebelumnya dan pada hari jatuh tempo. Terlewat = Terlambat.','Saat perancah dibongkar, tandai Dibongkar; catatan tetap tersimpan sebagai riwayat.']],
+['Scaffolder dan sertifikat (aktif)',['HSSE IC menambahkan setiap scaffolder: nama, jabatan, telepon, foto orang.','Tambahkan sertifikat eksternal: jenis, nomor, tanggal terbit dan kedaluwarsa, serta foto sertifikat. Tanpa sertifikat orang tampil sebagai Tanpa sertifikat dan tidak dihitung bersertifikat.','Aplikasi mengirim pengingat sebelum kedaluwarsa. Perbarui sertifikat, data dan foto sebelum tanggalnya.']],
+['Pelatihan Bekerja di Ketinggian (direncanakan)',['HSSE IC mencatat setiap pelatihan internal: orang, tanggal, pelatih, masa berlaku.','Tanggal penyegaran memicu pengingat yang sama.']],
+['Harness (direncanakan)',['HSSE IC mendaftarkan setiap harness: nomor seri, pabrikan, tanggal produksi, tanggal diterbitkan, kontraktor, pemakai.','Supervisor perancah memeriksa sebelum dipakai dan mencatatnya. HSSE melakukan inspeksi berkala dan mencatatnya. Frekuensi inspeksi dan daftar periksa harus dikonfirmasi dengan standar Shell / Mentari sebelum go-live.','Harness yang gagal, atau melewati umur pakainya, diberi tag Jangan dipakai dan ditarik dari penggunaan.']]],
+ruleH:'Aturan yang harus diingat',
+rules:['Tidak ada yang memakai perancah sebelum inspeksi serah terima lulus dan foto tag bertanda tangan diunggah.','Hanya supervisor disetujui dengan sertifikat berlaku, dari kontraktor yang sama, yang boleh disebut sebagai pembangun.','Setiap butir gagal perlu komentar. Komentar umum wajib di setiap inspeksi (tulis Tidak ada jika tidak ada tambahan).','Masuk dengan email Anda sendiri dan kode 6 digit. Jangan bagikan kode.','Jika seseorang pergi atau sertifikat habis, HSSE IC memperbarui data di hari yang sama.'],
+decH:'Keputusan yang dibutuhkan dari Iggy',
+decs:['Konfirmasi nama baru: Database Bekerja di Ketinggian (usulan).','Konfirmasi tabel akses di atas, terutama apa yang boleh dilakukan HSSE IC dan yang tidak boleh dilakukan supervisor perancah.','Konfirmasi frekuensi dan daftar periksa inspeksi harness (standar Shell / Mentari).','Konfirmasi kolom pelatihan Bekerja di Ketinggian: penyelenggara, masa berlaku, interval penyegaran.'],
+open:'Buka aplikasi'},
+ms:{ver:'Versi',title:'Pangkalan Data Kerja di Ketinggian',sub:'Arahan',
+intro:'Pangkalan data ini menyimpan semua perkara tentang kerja di ketinggian di Projek Mentari di satu tempat: perancah, orang yang membinanya, latihan mereka, dan full body harness yang dipakai. Data dimiliki dan dikemas kini oleh HSSE kontraktor (IC) dan pemeriksa perancah, bukan oleh seorang pusat.',
+modH:'Empat bahagian',live:'Aktif',plan:'Dirancang',
+mods:[['1. Inventori dan pemeriksaan perancah','Setiap perancah mendapat ID unik, lokasi utama (senarai UA/UC) dan sub lokasi, foto tag bertandatangan, dan pemeriksaan mingguan dengan peringatan.','live'],
+['2. Scaffolder dan sijil (luaran)','Nama, jawatan, sijil luaran (jenis, nombor, tarikh keluaran, tamat tempoh), foto orang dan foto sijil. Peringatan tamat tempoh pada 30/14/7/1/0 hari.','live'],
+['3. Latihan Kerja di Ketinggian (dalaman)','Rekod siapa yang telah menamatkan latihan dalaman Kerja di Ketinggian: tarikh, jurulatih, tempoh sah dan tarikh penyegaran.','plan'],
+['4. Daftar dan pemeriksaan full body harness','Setiap harness ada nombor siri, kontraktor pemilik dan pengguna, serta rekod setiap pemeriksaan oleh HSSE dan penyelia perancah. Harness rosak diberi tag Jangan guna.','plan']],
+whoH:'Siapa buat apa',
+roles:[['HSSE Mentari (admin)','Penyeliaan sahaja: tetapan, senarai pengguna, senarai lokasi, semua kontraktor. Tidak memasukkan data kontraktor setiap hari.'],
+['HSSE IC (GSB, WEN, KKS, PBS)','Pemilik data kontraktor sendiri: memuat naik penyelia, scaffolder, sijil, foto, latihan dan rekod harness. Boleh mendaftar perancah dan memastikan daftar kemas.'],
+['Pemeriksa perancah','Pemilik rekod pemeriksaan. Membuat pemeriksaan serah terima (dan mengisi sub lokasi), pemeriksaan khas dan pemeriksaan semula selepas gagal. Melihat semua kontraktor.'],
+['Penyelia perancah','Mendaftar perancah baharu, membuat pemeriksaan mingguan perancah dan pemeriksaan harness krewnya. Hanya melihat kontraktor sendiri. Tidak boleh mengubah sijil atau daftar.'],
+['Penonton (viewer)','Baca sahaja.']],
+accH:'Akses (cadangan)',accNote:'Jadual ini ialah cadangan. Peranan "HSSE IC" ialah baharu dan perlu ditambah ke aplikasi: kini aplikasi hanya ada admin, pemeriksa, penyelia dan viewer. Bahagian 3 dan 4 belum dibina.',
+cols:['HSSE Mentari','HSSE IC','Pemeriksa perancah','Penyelia perancah','Viewer'],
+legend:'Ya = penuh · Sendiri = kontraktor sendiri sahaja · Lihat = baca sahaja · Tidak = tiada akses',
+Yn:'Ya',On:'Sendiri',Vn:'Lihat',Nn:'Tidak',
+rows:[['Lihat perancah dan orang','Y','O','Y','O','V'],
+['Muat naik / ubah penyelia perancah dan sijil','Y','O','N','N','N'],
+['Muat naik / ubah scaffolder, sijil, foto','Y','O','N','V','V'],
+['Daftar perancah baharu','Y','O','N','O','N'],
+['Pemeriksaan serah terima dan sub lokasi','Y','N','Y','N','N'],
+['Pemeriksaan mingguan perancah','Y','O','Y','O','N'],
+['Pemeriksaan khas / semula selepas gagal','Y','N','Y','N','N'],
+['Tanda perancah dirobohkan','Y','O','Y','O','N'],
+['Rekod latihan Kerja di Ketinggian (dirancang)','Y','O','V','V','V'],
+['Daftar harness: tambah / ubah (dirancang)','Y','O','V','V','V'],
+['Pemeriksaan harness (dirancang)','Y','O','V','O','V'],
+['Lihat nombor telefon','Y','O','N','N','N'],
+['Tetapan, pengguna, senarai lokasi','Y','N','N','N','N']],
+procH:'Cara proses berfungsi',
+procs:[['Perancah (aktif)',['Penyelia atau HSSE IC mendaftar perancah: kontraktor, jenis, lokasi utama daripada senarai, dimohon oleh, dibina oleh (penyelia diluluskan), tarikh didirikan, kelas beban, nota. Semua medan wajib diisi.','Aplikasi memberi ID unik, contohnya PBS-T-2610-001 (kontraktor, jenis, tahun dan bulan, nombor turutan). Status Pending: jangan guna.','Pemeriksa perancah dimaklumkan, ke tapak, mengisi sub lokasi, melengkapkan senarai semak serah terima penuh dan memuat naik foto tag bertandatangan (depan).','Jika semua lulus, perancah menjadi Aktif dan tarikh pemeriksaan seterusnya ditetapkan. Satu item gagal menjadikannya Jangan guna, dan penyelia dimaklumkan.','Setiap minggu penyelia atau pemeriksa membuat pemeriksaan mingguan dan memuat naik foto tag belakang (grid pemeriksaan). Aplikasi memberi peringatan sehari sebelum dan pada hari akhir. Terlepas = Lewat.','Apabila perancah dirobohkan, tandakan Dirobohkan; rekod kekal sebagai sejarah.']],
+['Scaffolder dan sijil (aktif)',['HSSE IC menambah setiap scaffolder: nama, jawatan, telefon, foto orang.','Tambah sijil luaran: jenis, nombor, tarikh keluaran dan tamat, serta foto sijil. Tanpa sijil orang itu dipaparkan Tiada sijil dan tidak dikira bersijil.','Aplikasi menghantar peringatan sebelum tamat. Baharui sijil, rekod dan foto sebelum tarikh.']],
+['Latihan Kerja di Ketinggian (dirancang)',['HSSE IC merekod setiap latihan dalaman: orang, tarikh, jurulatih, tempoh sah.','Tarikh penyegaran mencetus peringatan yang sama.']],
+['Harness (dirancang)',['HSSE IC mendaftar setiap harness: nombor siri, pengeluar, tarikh pembuatan, tarikh dikeluarkan, kontraktor, pengguna.','Penyelia perancah memeriksa sebelum guna dan merekodnya. HSSE membuat pemeriksaan berkala dan merekodnya. Kekerapan pemeriksaan dan senarai semak mesti disahkan dengan standard Shell / Mentari sebelum go-live.','Harness yang gagal, atau melebihi hayat, diberi tag Jangan guna dan dikeluarkan daripada perkhidmatan.']]],
+ruleH:'Peraturan untuk diingat',
+rules:['Tiada sesiapa menggunakan perancah sebelum pemeriksaan serah terima lulus dan foto tag bertandatangan dimuat naik.','Hanya penyelia diluluskan dengan sijil sah, daripada kontraktor yang sama, boleh dinamakan sebagai pembina.','Setiap item gagal perlu komen. Komen keseluruhan wajib pada setiap pemeriksaan (tulis Tiada jika tiada tambahan).','Log masuk dengan e-mel anda sendiri dan kod 6 digit. Jangan kongsi kod.','Jika seseorang berhenti atau sijil tamat, HSSE IC mengemas kini rekod pada hari yang sama.'],
+decH:'Keputusan diperlukan daripada Iggy',
+decs:['Sahkan nama baharu: Pangkalan Data Kerja di Ketinggian (cadangan).','Sahkan jadual akses di atas, terutamanya apa yang HSSE IC boleh buat dan yang penyelia perancah tidak boleh.','Sahkan kekerapan dan senarai semak pemeriksaan harness (standard Shell / Mentari).','Sahkan medan latihan Kerja di Ketinggian: penyedia, tempoh sah, selang penyegaran.'],
+open:'Buka aplikasi'}};
+var lang='en';try{lang=localStorage.getItem('wah_lang')||'en';}catch(e){}
+if(!T[lang])lang='en';
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function render(){var t=T[lang];document.documentElement.lang=lang;document.title=t.title+' – '+t.sub;
+ document.getElementById('h1').textContent=t.title+' · '+t.sub;
+ document.getElementById('ver').textContent=t.ver+' '+VERSION;
+ document.getElementById('lang').innerHTML=['en','id','ms'].map(function(l){return '<button data-l="'+l+'" class="'+(l===lang?'on':'')+'">'+l.toUpperCase()+'</button>';}).join('');
+ var h='<p>'+esc(t.intro)+'</p><h2>'+esc(t.modH)+'</h2>';
+ t.mods.forEach(function(m){h+='<div class="card"><h3>'+esc(m[0])+'<span class="tag '+m[2]+'">'+esc(t[m[2]])+'</span></h3>'+esc(m[1])+'</div>';});
+ h+='<h2>'+esc(t.whoH)+'</h2>';t.roles.forEach(function(r){h+='<div class="card"><h3>'+esc(r[0])+'</h3>'+esc(r[1])+'</div>';});
+ h+='<h2>'+esc(t.accH)+'</h2><div class="note">'+esc(t.accNote)+'</div><div class="scroll"><table><tr><th></th>'+t.cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr>';
+ t.rows.forEach(function(r){h+='<tr><td>'+esc(r[0])+'</td>'+r.slice(1).map(function(c){return '<td class="'+c+'">'+esc(t[c+'n'])+'</td>';}).join('')+'</tr>';});
+ h+='</table></div><div class="legend">'+esc(t.legend)+'</div><h2>'+esc(t.procH)+'</h2>';
+ t.procs.forEach(function(p){h+='<div class="card"><h3>'+esc(p[0])+'</h3><ol>'+p[1].map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ol></div>';});
+ h+='<h2>'+esc(t.ruleH)+'</h2><div class="card"><ul>'+t.rules.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></div>';
+ h+='<h2>'+esc(t.decH)+'</h2><div class="card"><ul>'+t.decs.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></div>';
+ h+='<a class="btn" href="'+APP+'">'+esc(t.open)+'</a>';
+ document.getElementById('m').innerHTML=h;}
+document.getElementById('lang').onclick=function(e){var l=e.target.getAttribute&&e.target.getAttribute('data-l');if(l){lang=l;try{localStorage.setItem('wah_lang',l);}catch(x){}render();}};
+render();
+</script></body></html>

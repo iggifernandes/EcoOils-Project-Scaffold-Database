@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Scaffold Inspection Register</title>
+<title>Working at Height Database</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -73,11 +73,11 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{text-align:left;p
 'use strict';
 /* ================= CONFIG ================= */
 var API_URL = 'https://script.google.com/macros/s/AKfycbxbNSJGjm2iB6SA6z2wiXMS_R1nuCZU3cdeHR62QK0YkxRpZn0nK3_oRvOZX4MfHb4L/exec';
-var VERSION = '1.1.3';
+var VERSION = '1.1.4';
 
 /* ================= i18n ================= */
 var L = {
-en:{title:'Scaffold Inspection Register',version:'Version',login:'Log in',email:'Email',sendCode:'Send code',code:'6-digit code',verify:'Verify',keep:'Keep me logged in',logout:'Log out',
+en:{title:'Working at Height Database',instr:'Instructions',version:'Version',login:'Log in',email:'Email',sendCode:'Send code',code:'6-digit code',verify:'Verify',keep:'Keep me logged in',logout:'Log out',
  codeSent:'If this email is registered, a code was sent.',setupApi:'Paste the Apps Script web app URL',save:'Save',cancel:'Cancel',close:'Close',submit:'Submit',add:'Add',edit:'Edit',view:'View',loading:'Loading…',
  t_dash:'Dashboard',t_scaf:'Scaffolds',t_new:'New scaffold',t_insp:'Inspect',t_sup:'Supervisors',t_rem:'Reminders',t_crew:'Scaffolders',addCrew:'Add scaffolder',importCrew:'Import names',crewRole:'Grade / role',crewPhoto:'Photo of scaffolder',NoCert:'No certificate',crewImportHelp:'One per line: name, contractor, grade, phone, certType, certNo, issueDate, expiryDate (certificate columns may be left empty)',certOptional:'Leave the certificate fields empty if not yet available.',total:'Total',crewNoPhoto:'No photo',waitInspector:'Waiting for the inspector: the handover inspection must be done by an inspector.',noSup:'No approved supervisor for this contractor. Add or renew one first.',mainLoc:'Main location (UA/UC list)',pickLoc:'Select main location',subLoc:'Sub location',subLocPh:'e.g. Level 2, east side of tank T-05',subLocHelp:'The inspector enters the sub location at the handover inspection.',allReq:'All fields are required.',locList:'Main locations (one per line)',syncUauc:'Sync from UA/UC Report app',locFound:'locations found. Review, then Save.',syncFail:'Could not read the UA/UC app. Edit the list by hand.',t_admin:'Admin',
  Active:'Active',Pending:'Pending',Overdue:'Overdue',DoNotUse:'Do not use',Dismantled:'Dismantled',Approved:'Approved',Expired:'Expired',Suspended:'Suspended',Pass:'Pass',Fail:'Fail',
@@ -93,7 +93,7 @@ en:{title:'Scaffold Inspection Register',version:'Version',login:'Log in',email:
  waQueue:'WhatsApp reminders to send',waHelp:'Tap WhatsApp, then send. Tap Sent when done.',sendWa:'WhatsApp',markSent:'Sent',runNow:'Run reminders now',ranNow:'Reminders run',
  users:'Users',role:'Role',active:'Active',addUser:'Add / edit user',settings:'Settings',interval:'Re-inspection interval (days)',contractors:'Contractors (comma)',types:'Scaffold types (T:Name|S:Name)',
  g_F:'Foundation',g_S:'Structure',g_P:'Platform',g_E:'Edge protection',g_A:'Access',g_V:'Environment & tag',g_W:'Weekly checks'},
-id:{title:'Register Inspeksi Scaffold',version:'Versi',login:'Masuk',email:'Email',sendCode:'Kirim kode',code:'Kode 6 digit',verify:'Verifikasi',keep:'Tetap masuk',logout:'Keluar',
+id:{title:'Database Bekerja di Ketinggian',instr:'Petunjuk',version:'Versi',login:'Masuk',email:'Email',sendCode:'Kirim kode',code:'Kode 6 digit',verify:'Verifikasi',keep:'Tetap masuk',logout:'Keluar',
  codeSent:'Jika email terdaftar, kode telah dikirim.',save:'Simpan',cancel:'Batal',close:'Tutup',submit:'Kirim',add:'Tambah',edit:'Ubah',view:'Lihat',loading:'Memuat…',
  t_dash:'Dasbor',t_scaf:'Scaffold',t_new:'Scaffold baru',t_insp:'Inspeksi',t_sup:'Supervisor',t_rem:'Pengingat',t_crew:'Scaffolder',addCrew:'Tambah scaffolder',importCrew:'Impor nama',crewRole:'Tingkat / peran',crewPhoto:'Foto scaffolder',NoCert:'Belum ada sertifikat',crewImportHelp:'Satu per baris: nama, kontraktor, tingkat, telepon, jenis sertifikat, no. sertifikat, tgl terbit, tgl berakhir (kolom sertifikat boleh kosong)',certOptional:'Kosongkan kolom sertifikat jika belum ada.',total:'Total',crewNoPhoto:'Tanpa foto',waitInspector:'Menunggu inspektur: inspeksi serah terima harus dilakukan oleh inspektur.',noSup:'Belum ada supervisor disetujui untuk kontraktor ini. Tambah atau perbarui dulu.',mainLoc:'Lokasi utama (daftar UA/UC)',pickLoc:'Pilih lokasi utama',subLoc:'Sub lokasi',subLocPh:'mis. Lantai 2, sisi timur tangki T-05',subLocHelp:'Inspektur mengisi sub lokasi saat inspeksi serah terima.',allReq:'Semua kolom wajib diisi.',locList:'Lokasi utama (satu per baris)',syncUauc:'Sinkron dari aplikasi Laporan UA/UC',locFound:'lokasi ditemukan. Periksa, lalu Simpan.',syncFail:'Tidak bisa membaca aplikasi UA/UC. Ubah daftar secara manual.',t_admin:'Admin',
  Active:'Aktif',Pending:'Menunggu',Overdue:'Terlambat',DoNotUse:'Dilarang dipakai',Dismantled:'Dibongkar',Approved:'Disetujui',Expired:'Kedaluwarsa',Suspended:'Ditangguhkan',Pass:'Lulus',Fail:'Gagal',
@@ -109,7 +109,7 @@ id:{title:'Register Inspeksi Scaffold',version:'Versi',login:'Masuk',email:'Emai
  waQueue:'Pengingat WhatsApp untuk dikirim',waHelp:'Ketuk WhatsApp, lalu kirim. Ketuk Terkirim jika selesai.',sendWa:'WhatsApp',markSent:'Terkirim',runNow:'Jalankan pengingat sekarang',ranNow:'Pengingat dijalankan',
  users:'Pengguna',role:'Peran',active:'Aktif',addUser:'Tambah / ubah pengguna',settings:'Pengaturan',interval:'Interval inspeksi ulang (hari)',contractors:'Kontraktor (koma)',types:'Jenis scaffold (T:Nama|S:Nama)',
  g_F:'Pondasi',g_S:'Struktur',g_P:'Platform',g_E:'Pagar pengaman',g_A:'Akses',g_V:'Lingkungan & tag',g_W:'Pemeriksaan mingguan'},
-ms:{title:'Daftar Pemeriksaan Perancah',version:'Versi',login:'Log masuk',email:'E-mel',sendCode:'Hantar kod',code:'Kod 6 digit',verify:'Sahkan',keep:'Kekalkan log masuk',logout:'Log keluar',
+ms:{title:'Pangkalan Data Kerja di Ketinggian',instr:'Arahan',version:'Versi',login:'Log masuk',email:'E-mel',sendCode:'Hantar kod',code:'Kod 6 digit',verify:'Sahkan',keep:'Kekalkan log masuk',logout:'Log keluar',
  codeSent:'Jika e-mel berdaftar, kod telah dihantar.',save:'Simpan',cancel:'Batal',close:'Tutup',submit:'Hantar',add:'Tambah',edit:'Ubah',view:'Lihat',loading:'Memuatkan…',
  t_dash:'Papan pemuka',t_scaf:'Perancah',t_new:'Perancah baharu',t_insp:'Pemeriksaan',t_sup:'Penyelia',t_rem:'Peringatan',t_crew:'Pemasang perancah',addCrew:'Tambah pemasang perancah',importCrew:'Import nama',crewRole:'Gred / peranan',crewPhoto:'Foto pemasang perancah',NoCert:'Tiada sijil',crewImportHelp:'Satu setiap baris: nama, kontraktor, gred, telefon, jenis sijil, no. sijil, tarikh keluar, tarikh tamat (lajur sijil boleh kosong)',certOptional:'Kosongkan medan sijil jika belum ada.',total:'Jumlah',crewNoPhoto:'Tiada foto',waitInspector:'Menunggu pemeriksa: pemeriksaan serah terima mesti dibuat oleh pemeriksa.',noSup:'Tiada penyelia diluluskan untuk kontraktor ini. Tambah atau baharui dahulu.',mainLoc:'Lokasi utama (senarai UA/UC)',pickLoc:'Pilih lokasi utama',subLoc:'Sub lokasi',subLocPh:'cth. Tingkat 2, sebelah timur tangki T-05',subLocHelp:'Pemeriksa mengisi sub lokasi semasa pemeriksaan serah terima.',allReq:'Semua medan wajib diisi.',locList:'Lokasi utama (satu setiap baris)',syncUauc:'Segerak daripada aplikasi Laporan UA/UC',locFound:'lokasi ditemui. Semak, kemudian Simpan.',syncFail:'Tidak dapat membaca aplikasi UA/UC. Ubah senarai secara manual.',t_admin:'Admin',
  Active:'Aktif',Pending:'Menunggu',Overdue:'Lewat',DoNotUse:'Dilarang guna',Dismantled:'Dibongkar',Approved:'Diluluskan',Expired:'Tamat tempoh',Suspended:'Digantung',Pass:'Lulus',Fail:'Gagal',
@@ -192,14 +192,14 @@ function render(){
   if(can('inspect'))tabs.push(['insp','t_insp']);
   tabs.push(['sup','t_sup']);tabs.push(['crew','t_crew']);
   if(can('admin')){tabs.push(['rem','t_rem']);tabs.push(['admin','t_admin']);}
-  app.innerHTML='<header><div><h1>'+t('title')+'</h1></div><div class="tr"><span class="ver">'+t('version')+' '+VERSION+'</span><span class="lang">'+['en','id','ms'].map(function(l){return '<button data-lang="'+l+'" class="'+(S.lang===l?'on':'')+'">'+l.toUpperCase()+'</button>';}).join('')+'</span><div class="who">'+esc(S.user.name)+' · '+esc(S.user.role)+'<a data-act="logout">'+t('logout')+'</a></div></div></header>'+
+  app.innerHTML='<header><div><h1>'+t('title')+'</h1></div><div class="tr"><span class="ver">'+t('version')+' '+VERSION+'</span><span class="lang">'+['en','id','ms'].map(function(l){return '<button data-lang="'+l+'" class="'+(S.lang===l?'on':'')+'">'+l.toUpperCase()+'</button>';}).join('')+'</span><div class="who"><a href="instructions.html" style="color:var(--g);margin:0 6px 0 0">'+t('instr')+'</a>'+esc(S.user.name)+' · '+esc(S.user.role)+'<a data-act="logout">'+t('logout')+'</a></div></div></header>'+
    '<nav>'+tabs.map(function(x){return '<button data-tab="'+x[0]+'" class="'+(S.tab===x[0]?'on':'')+'">'+t(x[1])+'</button>';}).join('')+'</nav><main id="view"></main>';
   var v={dash:vDash,scaf:vScaf,'new':vNew,insp:vInsp,sup:vSup,crew:vCrew,rem:vRem,admin:vAdmin}[S.tab]||vDash;
   v($('view'));
 }
 function renderLogin(){
   $('app').innerHTML='<div class="login card"><h1 style="text-align:center">'+t('title')+'</h1>'+
-   '<div style="text-align:right;margin-top:6px" class="tr"><span class="ver">'+t('version')+' '+VERSION+'</span><span class="lang">'+['en','id','ms'].map(function(l){return '<button data-lang="'+l+'" class="'+(S.lang===l?'on':'')+'">'+l.toUpperCase()+'</button>';}).join('')+'</span></div>'+
+   '<div style="text-align:right;margin-top:6px" class="tr"><span class="ver">'+t('version')+' '+VERSION+'</span><span class="lang">'+['en','id','ms'].map(function(l){return '<button data-lang="'+l+'" class="'+(S.lang===l?'on':'')+'">'+l.toUpperCase()+'</button>';}).join('')+'</span><div><a href="instructions.html" style="color:var(--g);font-size:12px">'+t('instr')+'</a></div></div>'+
    '<label>'+t('email')+'</label><input id="em" type="email" autocomplete="email"><p><button class="btn" id="sc">'+t('sendCode')+'</button></p>'+
    '<div id="step2" style="display:none"><label>'+t('code')+'</label><input id="cd" inputmode="numeric" maxlength="6"><label style="text-transform:none"><input type="checkbox" id="kp" style="width:auto"> '+t('keep')+'</label><p><button class="btn" id="vf">'+t('verify')+'</button></p></div></div>';
   $('sc').onclick=function(){var e=$('em').value.trim();if(!e)return;this.disabled=true;var b=this;
