@@ -1,5 +1,11 @@
-SCAFFOLD INSPECTION DATABASE v1.1.3 — GO-LIVE GUIDE
+SCAFFOLD INSPECTION DATABASE v1.1.6 — GO-LIVE GUIDE
 =====================================================
+
+WHAT IS NEW IN v1.1.6
+• Scaffolder Helper: needs Scaffolding Basic Awareness and Working at Height training (internal or external). No external certificate needed. Without both: "Training incomplete". Expiry reminders cover these trainings too.
+• Every certificate/training submission (scaffolders and supervisors, single or import) needs the tick "I have verified the certificate and all data is true and checked", then a confirmation pop-up.
+• Submitted records are locked. Renew = new certificate with new photo. Admin can unlock with a reason (logged); it must be verified again. Every submission is kept on the new Submissions tab.
+• Upgrade: paste Code.gs, run setup once, Deploy > Manage deployments > New version.
 
 WHAT IS NEW IN v1.1.3
 • Main Location is now a dropdown of the 35 locations from the UA/UC Report app (preloaded). Admin > Settings > Main locations lets you edit the list, or press "Sync from UA/UC Report app" to pull the latest list and then Save.
