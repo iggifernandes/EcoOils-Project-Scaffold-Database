@@ -1,5 +1,10 @@
-SCAFFOLD INSPECTION DATABASE v1.1.6 — GO-LIVE GUIDE
+SCAFFOLD COMPLIANCE HUB v1.3.0 — GO-LIVE GUIDE
 =====================================================
+
+WHAT IS NEW IN v1.3.0
+• Delete a scaffolder or supervisor from the list: admin presses Delete (reason required) and a request is created; an admin approves or rejects it under Admin > Delete requests. With two or more admins, a different admin must approve.
+• A supervisor named on a live (not dismantled) scaffold cannot be deleted. Deleted records are hidden, not erased (soft delete), and logged.
+• Upgrade: paste Code.gs, run setup once (adds the delete columns and the DeleteRequests tab), Deploy > Manage deployments > New version, then hard-refresh the site.
 
 WHAT IS NEW IN v1.2.0
 • Red tag button on every scaffold (admin, inspector, supervisor of that contractor). Records date, time, who, reason and an optional photo; status becomes RED TAG · Do not use; supervisor, inspectors and admin are emailed; daily reminders continue until cleared.
