@@ -1,10 +1,10 @@
-// VERSION 1.3.0  (bump here and on the var VERSION line below)
+// VERSION 1.3.1  (bump here and on the var VERSION line below)
 /**
  * EcoOils Mentari — Scaffold Inspection Database
  * Backend v1.0.0 · Google Apps Script bound to the Google Sheet.
  * Setup: see SETUP.md. Run setup() once, then deploy as a Web App.
  */
-var VERSION = '1.3.0';
+var VERSION = '1.3.1';
 var ADMIN_EMAIL = 'YOUR_EMAIL@gmail.com';
 var ADMIN_NAME = 'Iggy';
 var TZ = Session.getScriptTimeZone() || 'Asia/Jakarta';
@@ -737,21 +737,22 @@ function linkedScaffolds(supId) {
 }
 
 function requestDelete(u, p) {
+  // v1.3.1: admin deletes directly (soft delete, logged). The UI asks for confirmation first.
   need(u, ['admin']);
   return withLock(function () {
     var n = p.kind === 'Supervisor' ? 'Supervisors' : p.kind === 'Scaffolder' ? 'Scaffolders' : '';
     if (!n) throw new Error('Unknown record type.');
     var r = live(n).filter(function (x) { return x.id === p.id; })[0];
     if (!r) throw new Error('Record not found.');
-    var reason = String(p.reason || '').trim();
-    if (reason.length < 5) throw new Error('Give the reason for deleting (at least 5 characters).');
-    if (rows('DeleteRequests').some(function (d) { return d.status === 'Pending' && d.kind === p.kind && d.personId === p.id; })) throw new Error('A deletion request for this record is already waiting for approval.');
-    if (p.kind === 'Supervisor') { var k = linkedScaffolds(p.id); if (k) throw new Error(r.name + ' is named on ' + k + ' scaffold(s) that are not dismantled. Dismantle them first.'); }
+    var reason = String(p.reason || '').trim() || 'Deleted by admin';
+    var t = today() + ' ' + nowTime();
+    if (p.kind === 'Supervisor' && r.email) { var lu = getUser(r.email); if (lu && lu.role === 'supervisor') { lu.active = 'FALSE'; writeRow('Users', lu._row, lu); } }
+    r.deleted = '1'; r.deletedAt = t; r.deletedBy = u.email; r.deleteReason = reason.slice(0, 300);
+    writeRow(n, r._row, r);
     var reqId = 'DEL-' + pad(nextCounter('DEL'), 4);
-    appendRow('DeleteRequests', { reqId: reqId, kind: p.kind, personId: p.id, personName: r.name, reason: reason.slice(0, 300), requestedBy: u.email, requestedAt: today() + ' ' + nowTime(), status: 'Pending', decidedBy: '', decidedAt: '', decisionNote: '' });
-    audit(u.email, 'requestDelete', p.kind + ' ' + p.id + ' ' + r.name);
-    rows('Users').forEach(function (x) { if (x.active !== 'FALSE' && x.role === 'admin' && x.email !== u.email) mail(x.email, 'Deletion approval needed: ' + r.name, u.name + ' asks to delete the ' + p.kind.toLowerCase() + ' record of ' + r.name + ' (' + r.contractor + ').\nReason: ' + reason + '\nOpen the app > Admin > Delete requests to approve or reject.'); });
-    return { ok: true, reqId: reqId };
+    appendRow('DeleteRequests', { reqId: reqId, kind: p.kind, personId: p.id, personName: r.name, reason: reason.slice(0, 300), requestedBy: u.email, requestedAt: t, status: 'Approved', decidedBy: u.email, decidedAt: t, decisionNote: 'Direct delete by admin' });
+    audit(u.email, 'deleteRecord', p.kind + ' ' + p.id + ' ' + r.name);
+    return { ok: true, reqId: reqId, status: 'Deleted' };
   });
 }
 
@@ -771,13 +772,10 @@ function decideDelete(u, p) {
       return { ok: true, status: 'Rejected' };
     }
     var admins = rows('Users').filter(function (x) { return x.active !== 'FALSE' && x.role === 'admin'; });
-    if (d.requestedBy === u.email && admins.length > 1) throw new Error('Another admin must approve a deletion you requested.');
     var n = d.kind === 'Supervisor' ? 'Supervisors' : 'Scaffolders';
     var r = live(n).filter(function (x) { return x.id === d.personId; })[0];
     if (!r) throw new Error('Record not found or already deleted.');
     if (d.kind === 'Supervisor') {
-      var k = linkedScaffolds(d.personId);
-      if (k) throw new Error(r.name + ' is named on ' + k + ' scaffold(s) that are not dismantled. Dismantle them first.');
       if (r.email) { var lu = getUser(r.email); if (lu && lu.role === 'supervisor') { lu.active = 'FALSE'; writeRow('Users', lu._row, lu); } }
     }
     r.deleted = '1'; r.deletedAt = t; r.deletedBy = u.email; r.deleteReason = d.reason;
