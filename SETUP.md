@@ -1,6 +1,16 @@
 SCAFFOLD COMPLIANCE HUB v1.3.0 — GO-LIVE GUIDE
 =====================================================
 
+WHAT IS NEW IN v1.4.0
+• The scaffold inspector is the final authority. New Inspectors tab (admin adds each inspector with login email, certificate and photo; admin approves or suspends). Only an approved inspector with a valid certificate can register, inspect, red-tag or clear a scaffold.
+• ACTION BEFORE FIRST USE: every existing inspector user must be added under Inspectors, otherwise they are blocked.
+• New scaffold form is laid out like the physical tag (location, Ref. No., requested by, built by, date, structure to be used for, inspector). A live blue tag preview fills in as you type. After saving, the finished tag shows with the ID to copy onto the tag. Scaffold detail has a View tag button (front and back).
+• Built by: name every foreman (several allowed). In a small team the inspector may be named too.
+• Inspectors can now register scaffolds and enter the sub location straight away.
+• Back of tag (optional): No. of rungs, standards, lifts, area of boarding, structure. Decommissioned date fills in when the scaffold is dismantled.
+• Admin can add additional certificate photos to any supervisor, scaffolder or inspector record, even after it is locked.
+• Upgrade: paste Code.gs, run setup once (adds the Inspectors tab and the new columns), Deploy > Manage deployments > New version, then hard-refresh the site.
+
 WHAT IS NEW IN v1.3.1
 • Admin deletes a scaffolder or supervisor directly: press Delete, confirm in the pop-up. No approval step, no reason needed (optional).
 • Deleted records are hidden, not erased (soft delete), and logged; the Admin tab keeps the delete history. A deleted supervisor's login is switched off.

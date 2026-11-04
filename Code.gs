@@ -1,21 +1,22 @@
-// VERSION 1.3.1  (bump here and on the var VERSION line below)
+// VERSION 1.4.0  (bump here and on the var VERSION line below)
 /**
  * EcoOils Mentari — Scaffold Inspection Database
  * Backend v1.0.0 · Google Apps Script bound to the Google Sheet.
  * Setup: see SETUP.md. Run setup() once, then deploy as a Web App.
  */
-var VERSION = '1.3.1';
+var VERSION = '1.4.0';
 var ADMIN_EMAIL = 'YOUR_EMAIL@gmail.com';
 var ADMIN_NAME = 'Iggy';
 var TZ = Session.getScriptTimeZone() || 'Asia/Jakarta';
 var MAX_MAIL_PER_RUN = 80;                 // free Gmail limit is ~100/day
 
 var SHEETS = {
-  Supervisors: ['id','name','contractor','phone','email','certType','certNo','issueDate','expiryDate','approval','certPhotoId','notes','createdAt','updatedAt','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason'],
-  Scaffolders: ['id','name','contractor','role','phone','certType','certNo','issueDate','expiryDate','approval','photoId','certPhotoId','notes','createdAt','updatedAt','basicDate','basicExpiry','wahType','wahDate','wahExpiry','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason'],
+  Supervisors: ['id','name','contractor','phone','email','certType','certNo','issueDate','expiryDate','approval','certPhotoId','notes','createdAt','updatedAt','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason','extraPhotoIds'],
+  Inspectors: ['id','name','company','phone','email','certType','certNo','issueDate','expiryDate','approval','certPhotoId','extraPhotoIds','notes','createdAt','updatedAt','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason'],
+  Scaffolders: ['id','name','contractor','role','phone','certType','certNo','issueDate','expiryDate','approval','photoId','certPhotoId','notes','createdAt','updatedAt','basicDate','basicExpiry','wahType','wahDate','wahExpiry','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason','extraPhotoIds'],
   DeleteRequests: ['reqId','kind','personId','personName','reason','requestedBy','requestedAt','status','decidedBy','decidedAt','decisionNote'],
   Submissions: ['subId','kind','personId','date','by','snapshot'],
-  Scaffolds: ['refId','contractor','type','location','requestedBy','builtById','builtByName','erectedDate','loadClass','loadKg','status','lastInspectionDate','nextDueDate','inspector','tagFrontId','tagBackId','decommDate','notes','createdBy','createdAt','subLocation','redTagAt','redTagBy','redTagReason','redTagPrev'],
+  Scaffolds: ['refId','contractor','type','location','requestedBy','builtById','builtByName','erectedDate','loadClass','loadKg','status','lastInspectionDate','nextDueDate','inspector','tagFrontId','tagBackId','decommDate','notes','createdBy','createdAt','subLocation','redTagAt','redTagBy','redTagReason','redTagPrev','noRungs','noStandards','noLifts','boardingArea','structure'],
   RedTags: ['tagId','refId','action','at','byEmail','byName','reason','photoId'],
   Inspections: ['inspId','refId','date','time','kind','inspector','inspectorEmail','result','failCount','checklist','comments','photoFrontId','photoBackId','createdAt'],
   Users: ['email','name','role','contractor','active'],
@@ -269,12 +270,15 @@ function saveImage(folderName, dataUrl, fileName) {
   return folderFor(folderName).createFile(blob).getId();
 }
 
+function extraIds(r) { try { var a = JSON.parse(r.extraPhotoIds || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+
 function knownFile(id) {
   var found = false;
   rows('Scaffolds').forEach(function (r) { if (r.tagFrontId === id || r.tagBackId === id) found = true; });
   if (!found) rows('Inspections').forEach(function (r) { if (r.photoFrontId === id || r.photoBackId === id) found = true; });
-  if (!found) rows('Supervisors').forEach(function (r) { if (r.certPhotoId === id) found = true; });
-  if (!found) rows('Scaffolders').forEach(function (r) { if (r.photoId === id || r.certPhotoId === id) found = true; });
+  if (!found) rows('Supervisors').forEach(function (r) { if (r.certPhotoId === id || extraIds(r).indexOf(id) >= 0) found = true; });
+  if (!found) rows('Inspectors').forEach(function (r) { if (r.certPhotoId === id || extraIds(r).indexOf(id) >= 0) found = true; });
+  if (!found) rows('Scaffolders').forEach(function (r) { if (r.photoId === id || r.certPhotoId === id || extraIds(r).indexOf(id) >= 0) found = true; });
   return found;
 }
 
@@ -352,6 +356,7 @@ function listAll(u) {
   rows('DeleteRequests').forEach(function (d) { if (d.status === 'Pending') pend[d.kind + ':' + d.personId] = d.reqId; });
   var sp = live('Supervisors').map(function (s) { var o = decSup(s, u.role); o.pendingDelete = pend['Supervisor:' + s.id] ? '1' : ''; return o; });
   var cr = live('Scaffolders').map(function (s) { var o = decCrew(s, u.role); o.pendingDelete = pend['Scaffolder:' + s.id] ? '1' : ''; return o; });
+  var ip = live('Inspectors').map(function (s) { var o = decSup(s, u.role); o.pendingDelete = pend['Inspector:' + s.id] ? '1' : ''; return o; });
   if (u.role === 'supervisor') {
     sc = sc.filter(function (s) { return s.contractor === u.contractor; });
     sp = sp.filter(function (s) { return s.contractor === u.contractor; });
@@ -366,7 +371,7 @@ function listAll(u) {
     if (s && i.result === 'Fail' && i.date >= cutoff) failBy[s.contractor] = (failBy[s.contractor] || 0) + 1;
   });
   sc.forEach(function (s) { s.handoverDone = hoPass[s.refId] ? '1' : ''; });
-  var out = { ok: true, today: today(), version: VERSION, user: pub(u), cfg: cfg(), scaffolds: sc, supervisors: sp, scaffolders: cr, failByContractor: failBy, users: [], wa: [] };
+  var out = { ok: true, today: today(), version: VERSION, user: pub(u), cfg: cfg(), scaffolds: sc, supervisors: sp, inspectors: ip, scaffolders: cr, failByContractor: failBy, users: [], wa: [] };
   if (u.role === 'admin') {
     out.users = rows('Users').map(function (x) { return { email: x.email, name: x.name, role: x.role, contractor: x.contractor, active: x.active }; });
     out.wa = rows('WaQueue').filter(function (w) { return w.status === 'Pending'; }).map(function (w) { delete w._row; return w; });
@@ -386,8 +391,70 @@ function validSupervisorFor(contractor, supId) {
   return s;
 }
 
+function tb(v) { return String(v == null ? '' : v).trim().slice(0, 40); }
+
+function approvedInspectorById(id) {
+  var s = live('Inspectors').filter(function (x) { return x.id === id; })[0];
+  if (!s) throw new Error('Inspector not found.');
+  var st = supStatus(s);
+  if (st !== 'Approved') throw new Error('Inspector ' + s.name + ' is ' + st + ' and cannot be used.');
+  return s;
+}
+
+// "Built by" can name several foremen (SUP-...) and, in a small team, an inspector (INSP-...).
+function builderList(contractor, raw) {
+  var ids = (Array.isArray(raw) ? raw : String(raw || '').split(',')).map(function (x) { return String(x).trim(); }).filter(Boolean);
+  var seen = {};
+  ids = ids.filter(function (x) { if (seen[x]) return false; seen[x] = 1; return true; });
+  if (!ids.length) throw new Error('Name at least one person in "Built by" (the foreman).');
+  if (ids.length > 6) throw new Error('At most 6 names in "Built by".');
+  var names = ids.map(function (id) {
+    if (id.indexOf('INSP-') === 0) return approvedInspectorById(id).name + ' (Inspector)';
+    return validSupervisorFor(contractor, id).name;
+  });
+  return { ids: ids.join(','), names: names.join(' / ') };
+}
+
+function builderRecords(s) {
+  var out = [];
+  String(s.builtById || '').split(',').forEach(function (id) {
+    id = id.trim(); if (!id) return;
+    var n = id.indexOf('INSP-') === 0 ? 'Inspectors' : 'Supervisors';
+    var r = rows(n).filter(function (x) { return x.id === id; })[0];
+    if (r) out.push(r);
+  });
+  return out;
+}
+
+function needInspectorApproval(u) {
+  if (u.role !== 'inspector') return;
+  var r = live('Inspectors').filter(function (x) { return String(x.email || '').toLowerCase() === String(u.email).toLowerCase(); })[0];
+  if (!r) throw new Error('You are not registered as a scaffold inspector yet. Ask the admin to add your certificate under Inspectors.');
+  var st = supStatus(r);
+  if (st !== 'Approved') throw new Error('Your inspector certificate is ' + st + '. You cannot inspect or tag scaffolds until the admin approves it.');
+}
+
+function applyTagBack(s, p) {
+  ['noRungs', 'noStandards', 'noLifts', 'boardingArea', 'structure'].forEach(function (k) { if (p[k] !== undefined) s[k] = tb(p[k]); });
+}
+
+function saveTagBack(u, p) {
+  need(u, ['admin', 'inspector', 'supervisor']);
+  needInspectorApproval(u);
+  return withLock(function () {
+    var s = rows('Scaffolds').filter(function (x) { return x.refId === p.refId; })[0];
+    if (!s) throw new Error('Scaffold not found.');
+    if (u.role === 'supervisor' && s.contractor !== u.contractor) throw new Error('Not your contractor.');
+    applyTagBack(s, p);
+    writeRow('Scaffolds', s._row, s);
+    audit(u.email, 'saveTagBack', s.refId);
+    return { ok: true };
+  });
+}
+
 function createScaffold(u, p) {
-  need(u, ['admin', 'supervisor']);
+  need(u, ['admin', 'supervisor', 'inspector']);
+  needInspectorApproval(u);
   return withLock(function () {
     var c = cfg();
     var contractor = String(p.contractor || '').toUpperCase();
@@ -406,7 +473,8 @@ function createScaffold(u, p) {
     if (!lc) throw new Error('Choose a load class.');
     var kg = lc.kg;
     if (lc.k === 'Special Purpose') { kg = String(Number(p.loadKg) || ''); if (!kg) throw new Error('Enter the special-purpose load in kg/m².'); }
-    var sup = validSupervisorFor(contractor, p.builtById);
+    var bl = builderList(contractor, p.builtByIds !== undefined ? p.builtByIds : p.builtById);
+    var subLoc0 = u.role === 'supervisor' ? '' : String(p.subLocation || '').trim().slice(0, 80);
     var t = today();
     var date = p.erectedDate || t;
     if (!isDate(date) || date > t || daysBetween(date, t) > 7) throw new Error('Erected date must be within the last 7 days.');
@@ -415,12 +483,13 @@ function createScaffold(u, p) {
     var refId = contractor + '-' + type + '-' + yymm + '-' + pad(n, 3);
     appendRow('Scaffolds', {
       refId: refId, contractor: contractor, type: type, location: location, requestedBy: requestedBy,
-      builtById: sup.id, builtByName: sup.name, erectedDate: date, loadClass: lc.k, loadKg: kg,
+      builtById: bl.ids, builtByName: bl.names, erectedDate: date, loadClass: lc.k, loadKg: kg,
       status: 'Pending', lastInspectionDate: '', nextDueDate: '', inspector: '', tagFrontId: '', tagBackId: '',
-      decommDate: '', notes: notes.slice(0, 300), createdBy: u.email, createdAt: t + ' ' + nowTime(), subLocation: ''
+      decommDate: '', notes: notes.slice(0, 300), createdBy: u.email, createdAt: t + ' ' + nowTime(), subLocation: subLoc0,
+      noRungs: tb(p.noRungs), noStandards: tb(p.noStandards), noLifts: tb(p.noLifts), boardingArea: tb(p.boardingArea), structure: tb(p.structure)
     });
     audit(u.email, 'createScaffold', refId);
-    var to = rows('Users').filter(function (x) { return x.active !== 'FALSE' && (x.role === 'inspector' || x.role === 'admin'); }).map(function (x) { return x.email; });
+    var to = rows('Users').filter(function (x) { return x.active !== 'FALSE' && (x.role === 'inspector' || x.role === 'admin') && x.email !== u.email; }).map(function (x) { return x.email; });
     to.forEach(function (e) {
       mail(e, 'Scaffold awaiting inspection: ' + refId,
         refId + ' (' + contractor + ', ' + location + ') was registered by ' + u.name + ' and is awaiting handover inspection. The inspector enters the sub location at handover.\nIt must not be used until inspected and the signed tag photo is uploaded.');
@@ -431,6 +500,7 @@ function createScaffold(u, p) {
 
 function submitInspection(u, p) {
   need(u, ['admin', 'inspector', 'supervisor']);
+  needInspectorApproval(u);
   return withLock(function () {
     var c = cfg();
     var s = rows('Scaffolds').filter(function (x) { return x.refId === p.refId; })[0];
@@ -480,14 +550,14 @@ function submitInspection(u, p) {
       if (wasRed) { logRedTag(s.refId, 'Removed', u, 'Passed ' + kind + ' re-inspection ' + inspId, ''); s.redTagAt = ''; s.redTagBy = ''; s.redTagReason = ''; s.redTagPrev = ''; }
     }
     s.inspector = u.name;
+    applyTagBack(s, p);
     if (kind === 'Handover') s.subLocation = subLoc;
     if (fId) s.tagFrontId = fId;
     if (bId) s.tagBackId = bId;
     writeRow('Scaffolds', s._row, s);
     audit(u.email, 'inspection', s.refId + ' ' + kind + ' ' + result);
     if (fails) {
-      var sup = rows('Supervisors').filter(function (x) { return x.id === s.builtById; })[0];
-      if (sup) mail(sup.email, 'DO NOT USE: scaffold ' + s.refId, 'Scaffold ' + s.refId + ' (' + s.location + ') failed inspection with ' + fails + ' item(s). Do not use it. Rectify and request re-inspection.');
+      builderRecords(s).forEach(function (sup) { if (sup.email) mail(sup.email, 'DO NOT USE: scaffold ' + s.refId, 'Scaffold ' + s.refId + ' (' + s.location + ') failed inspection with ' + fails + ' item(s). Do not use it. Rectify and request re-inspection.'); });
     }
     return { ok: true, result: result, fails: fails, nextDueDate: s.nextDueDate, inspId: inspId };
   });
@@ -499,6 +569,7 @@ function logRedTag(refId, action, u, reason, photoId) {
 
 function redTag(u, p) {
   need(u, ['admin', 'inspector', 'supervisor']);
+  needInspectorApproval(u);
   return withLock(function () {
     var s = rows('Scaffolds').filter(function (x) { return x.refId === p.refId; })[0];
     if (!s) throw new Error('Scaffold not found.');
@@ -515,9 +586,8 @@ function redTag(u, p) {
     logRedTag(s.refId, 'Applied', u, reason.slice(0, 300), photoId);
     audit(u.email, 'redTag', s.refId + ' ' + reason.slice(0, 100));
     var msg = 'RED TAG - DO NOT USE: scaffold ' + s.refId + ' (' + locFull(s) + ', ' + s.contractor + ')\nRed tagged ' + at + ' by ' + u.name + '.\nReason: ' + reason + '\nDo not use this scaffold until it is re-inspected by an inspector and the red tag is removed.';
-    var sup = rows('Supervisors').filter(function (x) { return x.id === s.builtById; })[0];
     var to = {};
-    if (sup && sup.email) to[sup.email] = 1;
+    builderRecords(s).forEach(function (sup) { if (sup.email) to[sup.email] = 1; });
     rows('Users').forEach(function (x) { if (x.active !== 'FALSE' && (x.role === 'admin' || x.role === 'inspector')) to[x.email] = 1; });
     Object.keys(to).forEach(function (e) { mail(e, 'RED TAG: ' + s.refId, msg); });
     return { ok: true, redTagAt: at };
@@ -526,6 +596,7 @@ function redTag(u, p) {
 
 function removeRedTag(u, p) {
   need(u, ['admin', 'inspector']);
+  needInspectorApproval(u);
   return withLock(function () {
     var s = rows('Scaffolds').filter(function (x) { return x.refId === p.refId; })[0];
     if (!s) throw new Error('Scaffold not found.');
@@ -716,12 +787,14 @@ function importScaffolders(u, p) {
   });
 }
 
+function kindSheet(k) { return k === 'Supervisor' ? 'Supervisors' : k === 'Scaffolder' ? 'Scaffolders' : k === 'Inspector' ? 'Inspectors' : ''; }
+
 function unlockRecord(u, p) {
   need(u, ['admin']);
   return withLock(function () {
     var reason = String(p.reason || '').trim();
     if (reason.length < 5) throw new Error('Give a reason for unlocking (at least 5 characters).');
-    var n = p.kind === 'Supervisor' ? 'Supervisors' : p.kind === 'Scaffolder' ? 'Scaffolders' : '';
+    var n = kindSheet(p.kind);
     if (!n) throw new Error('Unknown record type.');
     var r = rows(n).filter(function (x) { return x.id === p.id; })[0];
     if (!r) throw new Error('Record not found.');
@@ -733,20 +806,20 @@ function unlockRecord(u, p) {
 }
 
 function linkedScaffolds(supId) {
-  return rows('Scaffolds').filter(function (x) { return x.builtById === supId && x.status !== 'Dismantled'; }).length;
+  return rows('Scaffolds').filter(function (x) { return String(x.builtById).split(',').indexOf(supId) >= 0 && x.status !== 'Dismantled'; }).length;
 }
 
 function requestDelete(u, p) {
   // v1.3.1: admin deletes directly (soft delete, logged). The UI asks for confirmation first.
   need(u, ['admin']);
   return withLock(function () {
-    var n = p.kind === 'Supervisor' ? 'Supervisors' : p.kind === 'Scaffolder' ? 'Scaffolders' : '';
+    var n = kindSheet(p.kind);
     if (!n) throw new Error('Unknown record type.');
     var r = live(n).filter(function (x) { return x.id === p.id; })[0];
     if (!r) throw new Error('Record not found.');
     var reason = String(p.reason || '').trim() || 'Deleted by admin';
     var t = today() + ' ' + nowTime();
-    if (p.kind === 'Supervisor' && r.email) { var lu = getUser(r.email); if (lu && lu.role === 'supervisor') { lu.active = 'FALSE'; writeRow('Users', lu._row, lu); } }
+    if ((p.kind === 'Supervisor' || p.kind === 'Inspector') && r.email) { var lu = getUser(r.email); if (lu && lu.role === p.kind.toLowerCase()) { lu.active = 'FALSE'; writeRow('Users', lu._row, lu); } }
     r.deleted = '1'; r.deletedAt = t; r.deletedBy = u.email; r.deleteReason = reason.slice(0, 300);
     writeRow(n, r._row, r);
     var reqId = 'DEL-' + pad(nextCounter('DEL'), 4);
@@ -772,7 +845,7 @@ function decideDelete(u, p) {
       return { ok: true, status: 'Rejected' };
     }
     var admins = rows('Users').filter(function (x) { return x.active !== 'FALSE' && x.role === 'admin'; });
-    var n = d.kind === 'Supervisor' ? 'Supervisors' : 'Scaffolders';
+    var n = kindSheet(d.kind);
     var r = live(n).filter(function (x) { return x.id === d.personId; })[0];
     if (!r) throw new Error('Record not found or already deleted.');
     if (d.kind === 'Supervisor') {
@@ -784,6 +857,69 @@ function decideDelete(u, p) {
     writeRow('DeleteRequests', d._row, d);
     audit(u.email, 'approveDelete', d.kind + ' ' + d.personId + ' ' + r.name + ' reason: ' + d.reason.slice(0, 150));
     return { ok: true, status: 'Approved' };
+  });
+}
+
+var INSP_RENEW = ['certType', 'certNo', 'issueDate', 'expiryDate', 'certPhoto'];
+
+function saveInspectorInner(u, p) {
+  needVerified(p);
+  if (p.id) { var cur0 = rows('Inspectors').filter(function (x) { return x.id === p.id; })[0]; if (cur0 && p.renew) p = mergeRenew(cur0, p, INSP_RENEW); }
+  var name = String(p.name || '').trim();
+  var certNo = String(p.certNo || '').trim();
+  var email = String(p.email || '').trim().toLowerCase();
+  if (!name) throw new Error('Name is required.');
+  if (!email || email.indexOf('@') < 0) throw new Error('A valid email is required: it is the inspector login.');
+  if (!certNo) throw new Error('Certificate number is required.');
+  if (!isDate(p.expiryDate)) throw new Error('Expiry date must be YYYY-MM-DD.');
+  if (p.issueDate && !isDate(p.issueDate)) throw new Error('Issue date must be YYYY-MM-DD.');
+  var approval = p.approval === 'Suspended' ? 'Suspended' : 'Approved';
+  var all = live('Inspectors');
+  var ex = p.id ? all.filter(function (x) { return x.id === p.id; })[0] : null;
+  if (p.id && !ex) throw new Error('Inspector not found.');
+  if (all.some(function (x) { return x.email === email && (!ex || x.id !== ex.id); })) throw new Error('Another inspector already uses this email.');
+  lockedGuard(ex, p, 'inspector record');
+  if (p.renew && !p.certPhoto) throw new Error('Upload the photo of the new certificate.');
+  var t = today() + ' ' + nowTime();
+  var o = ex || { id: 'INSP-' + pad(nextCounter('INSP'), 3), createdAt: t, certPhotoId: '', extraPhotoIds: '' };
+  o.name = name; o.company = String(p.company || '').trim().slice(0, 60); o.phone = String(p.phone || '').trim(); o.email = email;
+  o.certType = String(p.certType || '').trim(); o.certNo = certNo; o.issueDate = p.issueDate || '';
+  o.expiryDate = p.expiryDate; o.approval = approval; o.notes = String(p.notes || '').slice(0, 300); o.updatedAt = t;
+  if (!p.certPhoto && !o.certPhotoId) throw new Error('Upload the photo of the certificate.');
+  if (p.certPhoto) o.certPhotoId = saveImage('_certificates', p.certPhoto, o.id + '_' + today() + '.jpg');
+  o.locked = '1'; o.verifiedBy = u.email; o.verifiedAt = t;
+  if (ex) writeRow('Inspectors', ex._row, o); else appendRow('Inspectors', o);
+  recordSubmission('Inspector', o, u);
+  var eu = getUser(email);
+  if (!eu) appendRow('Users', { email: email, name: name, role: 'inspector', contractor: '', active: 'TRUE' });
+  else if (eu.role === 'viewer') { eu.role = 'inspector'; writeRow('Users', eu._row, eu); }
+  audit(u.email, ex ? 'editInspector' : 'addInspector', o.id + ' ' + name);
+  return o.id;
+}
+
+function saveInspector(u, p) {
+  need(u, ['admin']);
+  return withLock(function () { return { ok: true, id: saveInspectorInner(u, p) }; });
+}
+
+// Extra certificate photos (second page, back side, endorsements). Admin only; allowed even on locked records.
+function addCertPhotos(u, p) {
+  need(u, ['admin']);
+  return withLock(function () {
+    var n = kindSheet(p.kind);
+    if (!n) throw new Error('Unknown record type.');
+    var r = live(n).filter(function (x) { return x.id === p.id; })[0];
+    if (!r) throw new Error('Record not found.');
+    var photos = Array.isArray(p.photos) ? p.photos : [];
+    if (!photos.length) throw new Error('Choose at least one photo.');
+    var list = extraIds(r);
+    if (list.length + photos.length > 12) throw new Error('At most 12 extra photos per record.');
+    photos.forEach(function (d) { list.push(saveImage('_certificates', d, r.id + '_extra_' + today() + '_' + (list.length + 1) + '.jpg')); });
+    r.extraPhotoIds = JSON.stringify(list);
+    r.updatedAt = today() + ' ' + nowTime();
+    writeRow(n, r._row, r);
+    audit(u.email, 'addCertPhotos', p.kind + ' ' + r.id + ' +' + photos.length);
+    return { ok: true, extraPhotoIds: r.extraPhotoIds };
   });
 }
 
@@ -846,7 +982,7 @@ function runNow(u) {
 var ACTIONS = {
   listAll: listAll, getPhoto: getPhoto, createScaffold: createScaffold, submitInspection: submitInspection,
   history: history, dismantle: dismantle, saveSupervisor: saveSupervisor, importSupervisors: importSupervisors,
-  saveScaffolder: saveScaffolder, requestDelete: requestDelete, decideDelete: decideDelete, redTag: redTag, removeRedTag: removeRedTag, unlockRecord: unlockRecord, importScaffolders: importScaffolders, saveUser: saveUser, saveConfig: saveConfig, waMark: waMark, runNow: runNow
+  saveInspector: saveInspector, addCertPhotos: addCertPhotos, saveTagBack: saveTagBack, saveScaffolder: saveScaffolder, requestDelete: requestDelete, decideDelete: decideDelete, redTag: redTag, removeRedTag: removeRedTag, unlockRecord: unlockRecord, importScaffolders: importScaffolders, saveUser: saveUser, saveConfig: saveConfig, waMark: waMark, runNow: runNow
 };
 
 /* ───────────── web app entry ───────────── */
@@ -902,7 +1038,7 @@ function runReminders() {
 
   rows('Scaffolds').forEach(function (s) {
     if (s.status === 'Dismantled') return;
-    var sup = supById[s.builtById];
+    var sup = supById[String(s.builtById || '').split(',').filter(function (x) { return x.indexOf('SUP-') === 0; })[0]];
     var tag = s.refId + ' (' + locFull(s) + ')';
     if (s.status === 'Active' && s.nextDueDate) {
       var d = daysBetween(t, s.nextDueDate);
