@@ -1,10 +1,10 @@
-// VERSION 1.4.0  (bump here and on the var VERSION line below)
+// VERSION 1.5.0  (bump here and on the var VERSION line below)
 /**
  * EcoOils Mentari — Scaffold Inspection Database
  * Backend v1.0.0 · Google Apps Script bound to the Google Sheet.
  * Setup: see SETUP.md. Run setup() once, then deploy as a Web App.
  */
-var VERSION = '1.4.0';
+var VERSION = '1.5.0';
 var ADMIN_EMAIL = 'YOUR_EMAIL@gmail.com';
 var ADMIN_NAME = 'Iggy';
 var TZ = Session.getScriptTimeZone() || 'Asia/Jakarta';
@@ -16,9 +16,10 @@ var SHEETS = {
   Scaffolders: ['id','name','contractor','role','phone','certType','certNo','issueDate','expiryDate','approval','photoId','certPhotoId','notes','createdAt','updatedAt','basicDate','basicExpiry','wahType','wahDate','wahExpiry','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason','extraPhotoIds'],
   DeleteRequests: ['reqId','kind','personId','personName','reason','requestedBy','requestedAt','status','decidedBy','decidedAt','decisionNote'],
   Submissions: ['subId','kind','personId','date','by','snapshot'],
-  Scaffolds: ['refId','contractor','type','location','requestedBy','builtById','builtByName','erectedDate','loadClass','loadKg','status','lastInspectionDate','nextDueDate','inspector','tagFrontId','tagBackId','decommDate','notes','createdBy','createdAt','subLocation','redTagAt','redTagBy','redTagReason','redTagPrev','noRungs','noStandards','noLifts','boardingArea','structure'],
+  Scaffolds: ['refId','contractor','type','location','requestedBy','builtById','builtByName','erectedDate','loadClass','loadKg','status','lastInspectionDate','nextDueDate','inspector','tagFrontId','tagBackId','decommDate','notes','createdBy','createdAt','subLocation','redTagAt','redTagBy','redTagReason','redTagPrev','noRungs','noStandards','noLifts','boardingArea','structure','tagPending','tagPendingBy'],
+  ScaffoldRequests: ['reqId','contractor','type','location','requestedBy','builtById','builtByName','erectedDate','loadClass','loadKg','notes','createdBy','createdAt','status','refId'],
   RedTags: ['tagId','refId','action','at','byEmail','byName','reason','photoId'],
-  Inspections: ['inspId','refId','date','time','kind','inspector','inspectorEmail','result','failCount','checklist','comments','photoFrontId','photoBackId','createdAt'],
+  Inspections: ['inspId','refId','date','time','kind','inspector','inspectorEmail','result','failCount','checklist','comments','photoFrontId','photoBackId','createdAt','declaration'],
   Users: ['email','name','role','contractor','active'],
   Config: ['key','value'],
   Counters: ['key','n'],
@@ -371,7 +372,9 @@ function listAll(u) {
     if (s && i.result === 'Fail' && i.date >= cutoff) failBy[s.contractor] = (failBy[s.contractor] || 0) + 1;
   });
   sc.forEach(function (s) { s.handoverDone = hoPass[s.refId] ? '1' : ''; });
-  var out = { ok: true, today: today(), version: VERSION, user: pub(u), cfg: cfg(), scaffolds: sc, supervisors: sp, inspectors: ip, scaffolders: cr, failByContractor: failBy, users: [], wa: [] };
+  var pt = pendingTagFor(u);
+  var rq = rows('ScaffoldRequests').filter(function (x) { return x.status === 'Open' && (u.role !== 'supervisor' || x.contractor === u.contractor); }).map(function (x) { delete x._row; return x; });
+  var out = { ok: true, requests: rq, pendingTag: pt ? decScaffold(pt) : null, today: today(), version: VERSION, user: pub(u), cfg: cfg(), scaffolds: sc, supervisors: sp, inspectors: ip, scaffolders: cr, failByContractor: failBy, users: [], wa: [] };
   if (u.role === 'admin') {
     out.users = rows('Users').map(function (x) { return { email: x.email, name: x.name, role: x.role, contractor: x.contractor, active: x.active }; });
     out.wa = rows('WaQueue').filter(function (w) { return w.status === 'Pending'; }).map(function (w) { delete w._row; return w; });
@@ -452,10 +455,8 @@ function saveTagBack(u, p) {
   });
 }
 
-function createScaffold(u, p) {
-  need(u, ['admin', 'supervisor', 'inspector']);
-  needInspectorApproval(u);
-  return withLock(function () {
+function createScaffoldCore(u, p, quiet, dry) {
+  {
     var c = cfg();
     var contractor = String(p.contractor || '').toUpperCase();
     if (u.role === 'supervisor') contractor = u.contractor;
@@ -478,6 +479,7 @@ function createScaffold(u, p) {
     var t = today();
     var date = p.erectedDate || t;
     if (!isDate(date) || date > t || daysBetween(date, t) > 7) throw new Error('Erected date must be within the last 7 days.');
+    if (dry) return { ok: true, dry: { contractor: contractor, type: type, location: location, requestedBy: requestedBy, notes: notes, loadClass: lc.k, loadKg: kg, builtById: bl.ids, builtByName: bl.names, erectedDate: date } };
     var yymm = date.slice(2, 4) + date.slice(5, 7);
     var n = nextCounter(contractor + '-' + yymm);
     var refId = contractor + '-' + type + '-' + yymm + '-' + pad(n, 3);
@@ -489,12 +491,109 @@ function createScaffold(u, p) {
       noRungs: tb(p.noRungs), noStandards: tb(p.noStandards), noLifts: tb(p.noLifts), boardingArea: tb(p.boardingArea), structure: tb(p.structure)
     });
     audit(u.email, 'createScaffold', refId);
-    var to = rows('Users').filter(function (x) { return x.active !== 'FALSE' && (x.role === 'inspector' || x.role === 'admin') && x.email !== u.email; }).map(function (x) { return x.email; });
+    var to = quiet ? [] : rows('Users').filter(function (x) { return x.active !== 'FALSE' && (x.role === 'inspector' || x.role === 'admin') && x.email !== u.email; }).map(function (x) { return x.email; });
     to.forEach(function (e) {
       mail(e, 'Scaffold awaiting inspection: ' + refId,
         refId + ' (' + contractor + ', ' + location + ') was registered by ' + u.name + ' and is awaiting handover inspection. The inspector enters the sub location at handover.\nIt must not be used until inspected and the signed tag photo is uploaded.');
     });
     return { ok: true, refId: refId };
+  }
+}
+
+// Kept for internal use and tests. Not exposed as an action: the ID is only generated by registerAndInspect.
+function createScaffold(u, p) {
+  need(u, ['admin', 'supervisor', 'inspector']);
+  needInspectorApproval(u);
+  return withLock(function () { return createScaffoldCore(u, p, false); });
+}
+
+function preCheckInspection(p) {
+  var ids = cfg().checklists.Handover;
+  var ans = p.answers || {}, com = p.comments || {};
+  ids.forEach(function (id) {
+    var a = ans[id];
+    if (['P', 'F', 'N'].indexOf(a) < 0) throw new Error('Checklist item ' + id + ' is not answered.');
+    if (a === 'F' && !String(com[id] || '').trim()) throw new Error('Item ' + id + ' failed: add a comment.');
+  });
+  var subLoc = String(p.subLocation || '').trim();
+  if (!subLoc) throw new Error('Sub location is required (entered by the inspector).');
+  if (subLoc.length > 80) throw new Error('Sub location is too long (max 80).');
+  if (!String(p.overall || '').trim()) throw new Error('Overall comments are required (write None if nothing to add).');
+  if (p.declared !== true) throw new Error('Tick the inspector declaration before submitting.');
+}
+
+// The ID is generated only after the inspection is finished. Then the inspector MUST upload the tag photo.
+function registerAndInspect(u, p) {
+  need(u, ['admin', 'inspector']);
+  needInspectorApproval(u);
+  return withLock(function () {
+    preCheckInspection(p);
+    var req = null;
+    if (p.requestId) {
+      req = rows('ScaffoldRequests').filter(function (x) { return x.reqId === p.requestId && x.status === 'Open'; })[0];
+      if (!req) throw new Error('That foreman request is no longer open.');
+    }
+    var cr = createScaffoldCore(u, p, true);
+    var s = rows('Scaffolds').filter(function (x) { return x.refId === cr.refId; })[0];
+    var res = runInspection(u, p, s, true);
+    if (req) { req.status = 'Done'; req.refId = cr.refId; writeRow('ScaffoldRequests', req._row, req); }
+    audit(u.email, 'registerAndInspect', cr.refId + ' ' + res.result);
+    return res;
+  });
+}
+
+function requestScaffold(u, p) {
+  need(u, ['admin', 'supervisor']);
+  return withLock(function () {
+    var d = createScaffoldCore(u, p, true, true).dry;
+    var reqId = 'REQ-' + pad(nextCounter('REQ'), 4);
+    appendRow('ScaffoldRequests', { reqId: reqId, contractor: d.contractor, type: d.type, location: d.location, requestedBy: d.requestedBy, builtById: d.builtById, builtByName: d.builtByName, erectedDate: d.erectedDate, loadClass: d.loadClass, loadKg: d.loadKg, notes: d.notes, createdBy: u.email, createdAt: today() + ' ' + nowTime(), status: 'Open', refId: '' });
+    audit(u.email, 'requestScaffold', reqId + ' ' + d.contractor + ' ' + d.location);
+    rows('Users').forEach(function (x) { if (x.active !== 'FALSE' && (x.role === 'inspector' || x.role === 'admin') && x.email !== u.email) mail(x.email, 'Scaffold ready for inspection: ' + d.contractor + ', ' + d.location, u.name + ' (' + d.contractor + ') reports a scaffold built at ' + d.location + ' by ' + d.builtByName + '. Open the app > New scaffold > Foreman requests, fill in the tag, inspect it and generate the ID.'); });
+    return { ok: true, reqId: reqId };
+  });
+}
+
+function pendingTagFor(u) {
+  return rows('Scaffolds').filter(function (x) { return x.tagPending === '1' && String(x.tagPendingBy).toLowerCase() === String(u.email).toLowerCase(); })[0] || null;
+}
+
+function uploadTagPhoto(u, p) {
+  need(u, ['admin', 'inspector']);
+  needInspectorApproval(u);
+  return withLock(function () {
+    var s = rows('Scaffolds').filter(function (x) { return x.refId === p.refId; })[0];
+    if (!s) throw new Error('Scaffold not found.');
+    var hos = rows('Inspections').filter(function (i) { return i.refId === s.refId && i.kind === 'Handover'; });
+    var ho = hos[hos.length - 1];
+    var mine = s.tagPending === '1' && (u.role === 'admin' || String(s.tagPendingBy).toLowerCase() === String(u.email).toLowerCase());
+    var late = s.tagPending !== '1' && !s.tagFrontId && ho && ho.result === 'Pass';
+    if (!mine && !late) throw new Error('This scaffold is not waiting for a tag photo.');
+    if (!p.photo) throw new Error('Take the photo of the signed tag.');
+    var id = saveImage(s.refId, p.photo, s.refId + '_' + today() + '_Handover_front.jpg');
+    s.tagFrontId = id;
+    if (ho && !ho.photoFrontId) { ho.photoFrontId = id; writeRow('Inspections', ho._row, ho); }
+    s.tagPending = ''; s.tagPendingBy = '';
+    if (s.status === 'Pending' && ho && ho.result === 'Pass') { s.status = 'Active'; s.nextDueDate = addDays(today(), cfg().intervalDays); s.lastInspectionDate = today(); }
+    writeRow('Scaffolds', s._row, s);
+    audit(u.email, 'uploadTagPhoto', s.refId);
+    return { ok: true, status: effStatus(s) };
+  });
+}
+
+function releaseTagLock(u, p) {
+  need(u, ['admin']);
+  return withLock(function () {
+    var s = rows('Scaffolds').filter(function (x) { return x.refId === p.refId; })[0];
+    if (!s) throw new Error('Scaffold not found.');
+    if (s.tagPending !== '1') throw new Error('Nothing to release.');
+    var reason = String(p.reason || '').trim();
+    if (reason.length < 5) throw new Error('Give the reason for releasing the lock (at least 5 characters).');
+    var who = s.tagPendingBy;
+    s.tagPending = ''; s.tagPendingBy = '';
+    writeRow('Scaffolds', s._row, s);
+    audit(u.email, 'releaseTagLock', s.refId + ' (' + who + ') reason: ' + reason.slice(0, 150));
+    return { ok: true };
   });
 }
 
@@ -502,12 +601,18 @@ function submitInspection(u, p) {
   need(u, ['admin', 'inspector', 'supervisor']);
   needInspectorApproval(u);
   return withLock(function () {
-    var c = cfg();
     var s = rows('Scaffolds').filter(function (x) { return x.refId === p.refId; })[0];
     if (!s) throw new Error('Scaffold not found.');
+    return runInspection(u, p, s, false);
+  });
+}
+
+function runInspection(u, p, s, reg) {
+  {
+    var c = cfg();
     if (u.role === 'supervisor' && s.contractor !== u.contractor) throw new Error('Not your contractor.');
     if (s.status === 'Dismantled') throw new Error('Scaffold is dismantled.');
-    var kind = String(p.kind || '');
+    var kind = reg ? 'Handover' : String(p.kind || '');
     if (['Handover', 'Weekly', 'Special'].indexOf(kind) < 0) throw new Error('Invalid inspection type.');
     var hoDone = rows('Inspections').some(function (i) { return i.refId === s.refId && i.kind === 'Handover' && i.result === 'Pass'; });
     if (!hoDone && kind !== 'Handover') throw new Error('This scaffold has not passed its Handover inspection yet. Do the full Handover inspection first.');
@@ -527,7 +632,8 @@ function submitInspection(u, p) {
     var subLoc = String(p.subLocation || '').trim();
     if (kind === 'Handover') { if (!subLoc) throw new Error('Sub location is required (entered by the inspector).'); if (subLoc.length > 80) throw new Error('Sub location is too long (max 80).'); }
     if (!String(p.overall || '').trim()) throw new Error('Overall comments are required (write None if nothing to add).');
-    if (kind === 'Handover' && !p.photoFront) throw new Error('Handover needs a photo of the front of the signed tag.');
+    if (p.declared !== true) throw new Error('Tick the inspector declaration before submitting.');
+    if (kind === 'Handover' && !p.photoFront && !reg) throw new Error('Handover needs a photo of the front of the signed tag.');
     if (kind !== 'Handover' && !p.photoBack) throw new Error('Upload a photo of the back of the tag (inspection grid).');
     var t = today(), tm = nowTime();
     var folder = s.refId;
@@ -538,7 +644,8 @@ function submitInspection(u, p) {
     appendRow('Inspections', {
       inspId: inspId, refId: s.refId, date: t, time: tm, kind: kind, inspector: u.name, inspectorEmail: u.email,
       result: result, failCount: fails, checklist: JSON.stringify(items), comments: String(p.overall || '').slice(0, 400),
-      photoFrontId: fId, photoBackId: bId, createdAt: t + ' ' + tm
+      photoFrontId: fId, photoBackId: bId, createdAt: t + ' ' + tm,
+      declaration: fails ? 'NOT FIT: inspector confirmed the findings; scaffold is NOT fit to use' : 'FIT: inspector confirmed the scaffold was inspected and is fit to use'
     });
     var wasRed = s.status === 'DoNotUse';
     s.lastInspectionDate = t;
@@ -546,7 +653,7 @@ function submitInspection(u, p) {
       if (!wasRed) { s.redTagPrev = s.status; s.redTagAt = t + ' ' + tm; s.redTagBy = u.name; s.redTagReason = 'Failed ' + kind + ' inspection ' + inspId + ' (' + fails + ' item(s))'; logRedTag(s.refId, 'Applied', u, s.redTagReason, ''); }
       s.status = 'DoNotUse'; s.nextDueDate = '';
     } else {
-      s.status = 'Active'; s.nextDueDate = addDays(t, c.intervalDays);
+      s.status = reg ? 'Pending' : 'Active'; s.nextDueDate = reg ? '' : addDays(t, c.intervalDays);
       if (wasRed) { logRedTag(s.refId, 'Removed', u, 'Passed ' + kind + ' re-inspection ' + inspId, ''); s.redTagAt = ''; s.redTagBy = ''; s.redTagReason = ''; s.redTagPrev = ''; }
     }
     s.inspector = u.name;
@@ -554,13 +661,14 @@ function submitInspection(u, p) {
     if (kind === 'Handover') s.subLocation = subLoc;
     if (fId) s.tagFrontId = fId;
     if (bId) s.tagBackId = bId;
+    if (reg) { s.tagPending = '1'; s.tagPendingBy = u.email; }
     writeRow('Scaffolds', s._row, s);
     audit(u.email, 'inspection', s.refId + ' ' + kind + ' ' + result);
     if (fails) {
       builderRecords(s).forEach(function (sup) { if (sup.email) mail(sup.email, 'DO NOT USE: scaffold ' + s.refId, 'Scaffold ' + s.refId + ' (' + s.location + ') failed inspection with ' + fails + ' item(s). Do not use it. Rectify and request re-inspection.'); });
     }
-    return { ok: true, result: result, fails: fails, nextDueDate: s.nextDueDate, inspId: inspId };
-  });
+    return { ok: true, result: result, fails: fails, nextDueDate: s.nextDueDate, inspId: inspId, refId: s.refId };
+  }
 }
 
 function logRedTag(refId, action, u, reason, photoId) {
@@ -980,9 +1088,9 @@ function runNow(u) {
 }
 
 var ACTIONS = {
-  listAll: listAll, getPhoto: getPhoto, createScaffold: createScaffold, submitInspection: submitInspection,
+  listAll: listAll, getPhoto: getPhoto,  submitInspection: submitInspection,
   history: history, dismantle: dismantle, saveSupervisor: saveSupervisor, importSupervisors: importSupervisors,
-  saveInspector: saveInspector, addCertPhotos: addCertPhotos, saveTagBack: saveTagBack, saveScaffolder: saveScaffolder, requestDelete: requestDelete, decideDelete: decideDelete, redTag: redTag, removeRedTag: removeRedTag, unlockRecord: unlockRecord, importScaffolders: importScaffolders, saveUser: saveUser, saveConfig: saveConfig, waMark: waMark, runNow: runNow
+  registerAndInspect: registerAndInspect, requestScaffold: requestScaffold, uploadTagPhoto: uploadTagPhoto, releaseTagLock: releaseTagLock, saveInspector: saveInspector, addCertPhotos: addCertPhotos, saveTagBack: saveTagBack, saveScaffolder: saveScaffolder, requestDelete: requestDelete, decideDelete: decideDelete, redTag: redTag, removeRedTag: removeRedTag, unlockRecord: unlockRecord, importScaffolders: importScaffolders, saveUser: saveUser, saveConfig: saveConfig, waMark: waMark, runNow: runNow
 };
 
 /* ───────────── web app entry ───────────── */
@@ -995,6 +1103,10 @@ function route(r) {
   var u = auth(r.token);
   var fn = ACTIONS[a];
   if (!fn) throw new Error('Unknown action.');
+  if (['listAll', 'getPhoto', 'history', 'uploadTagPhoto', 'releaseTagLock'].indexOf(a) < 0) {
+    var pt = pendingTagFor(u);
+    if (pt) throw new Error('TAG_PHOTO_PENDING: take and upload the photo of the signed tag for ' + pt.refId + ' first. Nothing else is possible until then.');
+  }
   return fn(u, r);
 }
 
@@ -1089,6 +1201,9 @@ function runReminders() {
   sec('OVERDUE re-inspection', overdue);
   sec('RED TAGGED - DO NOT USE (awaiting re-inspection)', dnu);
   sec('PENDING handover inspection (> 1 day)', pending);
+  var tagLate = [];
+  rows('Scaffolds').forEach(function (s) { if (s.tagPending === '1' && s.createdAt && daysBetween(s.createdAt.slice(0, 10), t) >= 1) tagLate.push(s.refId + ' · ' + s.contractor + ' · inspector ' + s.tagPendingBy + ' has not uploaded the tag photo'); });
+  sec('TAG PHOTO MISSING (> 24 h) - inspector is locked until uploaded', tagLate);
   sec('Certificates EXPIRED (supervisors and scaffolders)', certExpired);
   sec('Certificates expiring (supervisors and scaffolders)', certSoon);
   if (new Date(toMs(t)).getUTCDay() === 1) sec('Scaffolders with no certificate or missing training (Monday list)', crewNoCert);

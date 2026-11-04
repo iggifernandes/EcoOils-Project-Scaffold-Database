@@ -1,6 +1,15 @@
 SCAFFOLD COMPLIANCE HUB v1.3.0 — GO-LIVE GUIDE
 =====================================================
 
+WHAT IS NEW IN v1.5.0
+• The ID is generated only AFTER the inspection. Flow: inspector fills the tag form (no ID) > Handover checklist opens > inspector declaration ("I have inspected this scaffold and I confirm it is fit to use", or NOT fit if any item failed) + confirm pop-up > ID generated > tag photo pop-up.
+• Tag photo lock: after the ID is generated the inspector can do nothing else until the photo of the signed tag is uploaded. The pop-up comes back every time the app is opened, and the server refuses all other actions from that inspector. The scaffold becomes Active only after the photo.
+• Admin can release a lock (Scaffold detail > Release lock) with a written reason (logged). Photo missing after 24 hours shows in the admin daily digest.
+• A failed inspection still gets an ID, is red-tagged, and still needs the tag photo.
+• Foreman (supervisor) sends a scaffold request from the same tag form (no ID). The inspector opens it under New scaffold > Foreman requests, inspects and generates the ID.
+• The declaration is required on every inspection (Handover, Weekly, Special) and is stored with the inspection.
+• Upgrade: paste Code.gs, run setup once (adds the ScaffoldRequests tab and new columns), Deploy > Manage deployments > New version, then hard-refresh the site.
+
 WHAT IS NEW IN v1.4.0
 • The scaffold inspector is the final authority. New Inspectors tab (admin adds each inspector with login email, certificate and photo; admin approves or suspends). Only an approved inspector with a valid certificate can register, inspect, red-tag or clear a scaffold.
 • ACTION BEFORE FIRST USE: every existing inspector user must be added under Inspectors, otherwise they are blocked.
