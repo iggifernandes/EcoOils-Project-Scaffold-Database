@@ -1,6 +1,12 @@
 SCAFFOLD COMPLIANCE HUB v1.3.0 — GO-LIVE GUIDE
 =====================================================
 
+WHAT IS NEW IN v1.5.3
+• Contractor isolation: a foreman (supervisor login) sees only their own contractor's scaffolds, supervisors, scaffolders, company name and fail statistics. Other contractors' teams are not sent to the phone at all.
+• Inspectors are shown to a foreman only when the inspector's Company field equals that contractor's code (e.g. PBS). EcoOils inspectors and admins still see everyone.
+• v1.5.2: the Supervisors tab also lists the inspectors.
+• Upgrade: paste Code.gs, Deploy > Manage deployments > New version, hard-refresh. No setup run needed.
+
 WHAT IS NEW IN v1.5.1
 • Personal inspector PIN. Every registered inspector has their own 4 to 6 digit PIN, created by an emailed 6-digit code (valid 10 minutes). The PIN is needed to sign every inspection, handover, red tag and red-tag removal, so nobody can inspect on an inspector's behalf even if they know the login.
 • First time: the inspector logs in, presses PIN (or the red bar), asks for the code, and sets the PIN. Until then the inspector cannot inspect. A "PIN set" notice is emailed every time it changes.

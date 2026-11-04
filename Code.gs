@@ -1,10 +1,10 @@
-// VERSION 1.5.1  (bump here and on the var VERSION line below)
+// VERSION 1.5.3  (bump here and on the var VERSION line below)
 /**
  * EcoOils Mentari — Scaffold Inspection Database
  * Backend v1.0.0 · Google Apps Script bound to the Google Sheet.
  * Setup: see SETUP.md. Run setup() once, then deploy as a Web App.
  */
-var VERSION = '1.5.1';
+var VERSION = '1.5.3';
 var ADMIN_EMAIL = 'YOUR_EMAIL@gmail.com';   // first admin (can log in with an emailed code)
 var ADMIN_NAME = 'Iggy';
 var TZ = Session.getScriptTimeZone() || 'Asia/Jakarta';
@@ -351,6 +351,12 @@ function decCrew(s, role) {
 
 /* ───────────── actions ───────────── */
 
+function cfgFor(u) {
+  var g = cfg();
+  if (u.role === 'supervisor') g.contractors = g.contractors.filter(function (x) { return x === String(u.contractor || '').toUpperCase(); });
+  return g;
+}
+
 function listAll(u) {
   var sc = rows('Scaffolds').map(decScaffold);
   var pend = {};
@@ -362,6 +368,8 @@ function listAll(u) {
     sc = sc.filter(function (s) { return s.contractor === u.contractor; });
     sp = sp.filter(function (s) { return s.contractor === u.contractor; });
     cr = cr.filter(function (s) { return s.contractor === u.contractor; });
+    // a contractor only ever sees its own company: inspectors from other companies are hidden
+    ip = ip.filter(function (s) { return String(s.company || '').trim().toUpperCase() === String(u.contractor || '').trim().toUpperCase(); });
   }
   var byRef = {};
   sc.forEach(function (s) { byRef[s.refId] = s; });
@@ -372,10 +380,13 @@ function listAll(u) {
     if (s && i.result === 'Fail' && i.date >= cutoff) failBy[s.contractor] = (failBy[s.contractor] || 0) + 1;
   });
   sc.forEach(function (s) { s.handoverDone = hoPass[s.refId] ? '1' : ''; });
+  if (u.role === 'supervisor') {
+    var mine = {}; mine[u.contractor] = failBy[u.contractor] || 0; failBy = mine;
+  }
   var pt = pendingTagFor(u);
   var rq = rows('ScaffoldRequests').filter(function (x) { return x.status === 'Open' && (u.role !== 'supervisor' || x.contractor === u.contractor); }).map(function (x) { delete x._row; return x; });
   var mr = inspectorRecordFor(u);
-  var out = { ok: true, myPin: { record: !!mr, has: !!(mr && mr.pinHash) }, requests: rq, pendingTag: pt ? decScaffold(pt) : null, today: today(), version: VERSION, user: pub(u), cfg: cfg(), scaffolds: sc, supervisors: sp, inspectors: ip, scaffolders: cr, failByContractor: failBy, users: [], wa: [] };
+  var out = { ok: true, myPin: { record: !!mr, has: !!(mr && mr.pinHash) }, requests: rq, pendingTag: pt ? decScaffold(pt) : null, today: today(), version: VERSION, user: pub(u), cfg: cfgFor(u), scaffolds: sc, supervisors: sp, inspectors: ip, scaffolders: cr, failByContractor: failBy, users: [], wa: [] };
   if (u.role === 'admin') {
     out.users = rows('Users').map(function (x) { return { email: x.email, name: x.name, role: x.role, contractor: x.contractor, active: x.active }; });
     out.wa = rows('WaQueue').filter(function (w) { return w.status === 'Pending'; }).map(function (w) { delete w._row; return w; });
