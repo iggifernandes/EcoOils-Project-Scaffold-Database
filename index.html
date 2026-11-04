@@ -73,7 +73,7 @@ header.eh .eh-l{display:flex;gap:0;margin:0;padding:0;background:none;border:0}
 header.eh .eh-l button{background:none;color:#6e6b6c;border:0;border-bottom:3px solid transparent;border-radius:0;min-width:44px;min-height:44px;padding:0 8px;margin:0;font:400 15px/1 Jost,system-ui,Arial,sans-serif;letter-spacing:.06em;cursor:pointer;box-shadow:none;opacity:1;text-transform:none}
 header.eh .eh-l button.on,header.eh .eh-l button.active,header.eh .eh-l button[aria-pressed="true"]{color:#231f20;font-weight:600;border-bottom-color:#44a276;background:none}
 @media(max-width:420px){header.eh .eh-l button{min-width:40px}}
-.hubtitle{padding:4px 14px 0}.hubtitle h1{margin:10px 0 0}header.eh .who{font-size:12px;color:var(--g);margin-top:4px;text-align:right}header.eh .who a{color:var(--r);cursor:pointer;margin-left:6px}
+.hubtitle{padding:4px 14px 0;display:flex;align-items:center;justify-content:space-between;gap:10px}.plusbtn{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--r);color:#fff;font-size:30px;line-height:1;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25);margin-top:8px}.plusbtn:active{transform:scale(.95)}.hubtitle h1{margin:10px 0 0}header.eh .who{font-size:12px;color:var(--g);margin-top:4px;text-align:right}header.eh .who a{color:var(--r);cursor:pointer;margin-left:6px}
 
 .newwrap{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:14px;align-items:start}
 @media(max-width:900px){.newwrap{grid-template-columns:1fr}}
@@ -116,7 +116,7 @@ details.bk summary{cursor:pointer;font-size:12px;text-transform:uppercase;letter
 'use strict';
 /* ================= CONFIG ================= */
 var API_URL = 'https://script.google.com/macros/s/AKfycbxbNSJGjm2iB6SA6z2wiXMS_R1nuCZU3cdeHR62QK0YkxRpZn0nK3_oRvOZX4MfHb4L/exec';
-var VERSION = '1.5.4';
+var VERSION = '1.5.5';
 
 /* ================= i18n ================= */
 var L = {
@@ -238,7 +238,7 @@ function render(){
   if(can('inspect'))tabs.push(['insp','t_insp']);
   tabs.push(['sup','t_sup']);tabs.push(['insl','t_insl']);tabs.push(['crew','t_crew']);
   if(can('admin')){tabs.push(['rem','t_rem']);tabs.push(['admin','t_admin']);}
-  app.innerHTML=ecoHdr('<div class="who"><a href="instructions.html" style="color:var(--g);margin:0 6px 0 0">'+t('instr')+'</a>'+(needsPin()?'<a data-act="pin" style="margin:0 6px 0 0">'+t('pinBtn')+'</a>':'')+esc(S.user.name)+' \u00b7 '+esc(S.user.role)+'<a data-act="logout">'+t('logout')+'</a></div>')+'<div class="hubtitle"><h1>'+t('title')+'</h1></div>'+
+  app.innerHTML=ecoHdr('<div class="who"><a href="instructions.html" style="color:var(--g);margin:0 6px 0 0">'+t('instr')+'</a>'+(needsPin()?'<a data-act="pin" style="margin:0 6px 0 0">'+t('pinBtn')+'</a>':'')+esc(S.user.name)+' \u00b7 '+esc(S.user.role)+'<a data-act="logout">'+t('logout')+'</a></div>')+'<div class="hubtitle"><h1>'+t('title')+'</h1>'+(can('newScaffold')?'<button class="plusbtn" data-act="addscaf" id="plus" title="'+esc(t('t_new'))+'" aria-label="'+esc(t('t_new'))+'">+</button>':'')+'</div>'+
    '<nav>'+tabs.map(function(x){return '<button data-tab="'+x[0]+'" class="'+(S.tab===x[0]?'on':'')+'">'+t(x[1])+'</button>';}).join('')+'</nav><main id="view"></main>';
   var v={dash:vDash,scaf:vScaf,'new':vNew,insp:vInsp,sup:vSup,insl:vInsl,crew:vCrew,rem:vRem,admin:vAdmin}[S.tab]||vDash;
   v($('view'));
@@ -724,6 +724,7 @@ document.addEventListener('click',function(e){
   if(el.hasAttribute('data-tab')){S.tab=el.getAttribute('data-tab');if(S.tab!=='insp')S.insp=null;render();return;}
   if(el.getAttribute('data-act')==='logout'){logout();return;}
   if(el.getAttribute('data-act')==='pin'){pinForm();return;}
+  if(el.getAttribute('data-act')==='addscaf'){S.tab='new';render();try{window.scrollTo(0,0);}catch(e){}return;}
   if(el.hasAttribute('data-scaf')){scafDetail(el.getAttribute('data-scaf'));return;}
   if(el.hasAttribute('data-sup')){var sid=el.getAttribute('data-sup'),sr=S.sup.filter(function(x){return x.id===sid;})[0];if(can('admin')&&sr&&sr.locked==='1')supView(sid);else if(can('admin'))supForm(sid);else S.tab='sup',render();return;}
   if(el.hasAttribute('data-insl')){var iid=el.getAttribute('data-insl'),ir=(S.insl||[]).filter(function(x){return x.id===iid;})[0];if(can('admin')&&ir&&ir.locked!=='1')inpForm(iid);else inpView(iid);return;}
