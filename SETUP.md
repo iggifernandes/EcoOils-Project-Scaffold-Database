@@ -1,6 +1,14 @@
 SCAFFOLD COMPLIANCE HUB v1.3.0 — GO-LIVE GUIDE
 =====================================================
 
+WHAT IS NEW IN v1.5.1
+• Personal inspector PIN. Every registered inspector has their own 4 to 6 digit PIN, created by an emailed 6-digit code (valid 10 minutes). The PIN is needed to sign every inspection, handover, red tag and red-tag removal, so nobody can inspect on an inspector's behalf even if they know the login.
+• First time: the inspector logs in, presses PIN (or the red bar), asks for the code, and sets the PIN. Until then the inspector cannot inspect. A "PIN set" notice is emailed every time it changes.
+• 5 wrong PINs lock the PIN for 15 minutes. The PIN can be reset any time by email code. Changing an inspector's email erases the PIN.
+• Admin: Inspectors > open a record shows "PIN set / not set" and a Clear PIN button (e.g. if a PIN may be known by someone else). The PIN itself is stored only as a hash and is never shown, not even to admin.
+• Admins and foremen without an Inspectors record are not asked for a PIN. The signed inspection record notes "signed with inspector PIN".
+• Upgrade: paste Code.gs, run setup once (adds 4 PIN columns to Inspectors), Deploy > Manage deployments > New version, hard-refresh the site. Then every inspector sets their PIN once.
+
 WHAT IS NEW IN v1.5.0
 • The ID is generated only AFTER the inspection. Flow: inspector fills the tag form (no ID) > Handover checklist opens > inspector declaration ("I have inspected this scaffold and I confirm it is fit to use", or NOT fit if any item failed) + confirm pop-up > ID generated > tag photo pop-up.
 • Tag photo lock: after the ID is generated the inspector can do nothing else until the photo of the signed tag is uploaded. The pop-up comes back every time the app is opened, and the server refuses all other actions from that inspector. The scaffold becomes Active only after the photo.

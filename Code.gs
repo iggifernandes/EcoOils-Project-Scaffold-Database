@@ -1,18 +1,18 @@
-// VERSION 1.5.0  (bump here and on the var VERSION line below)
+// VERSION 1.5.1  (bump here and on the var VERSION line below)
 /**
  * EcoOils Mentari — Scaffold Inspection Database
  * Backend v1.0.0 · Google Apps Script bound to the Google Sheet.
  * Setup: see SETUP.md. Run setup() once, then deploy as a Web App.
  */
-var VERSION = '1.5.0';
-var ADMIN_EMAIL = 'YOUR_EMAIL@gmail.com';
+var VERSION = '1.5.1';
+var ADMIN_EMAIL = 'YOUR_EMAIL@gmail.com';   // first admin (can log in with an emailed code)
 var ADMIN_NAME = 'Iggy';
 var TZ = Session.getScriptTimeZone() || 'Asia/Jakarta';
 var MAX_MAIL_PER_RUN = 80;                 // free Gmail limit is ~100/day
 
 var SHEETS = {
   Supervisors: ['id','name','contractor','phone','email','certType','certNo','issueDate','expiryDate','approval','certPhotoId','notes','createdAt','updatedAt','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason','extraPhotoIds'],
-  Inspectors: ['id','name','company','phone','email','certType','certNo','issueDate','expiryDate','approval','certPhotoId','extraPhotoIds','notes','createdAt','updatedAt','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason'],
+  Inspectors: ['id','name','company','phone','email','certType','certNo','issueDate','expiryDate','approval','certPhotoId','extraPhotoIds','notes','createdAt','updatedAt','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason','pinHash','pinSetAt','pinFails','pinLockUntil'],
   Scaffolders: ['id','name','contractor','role','phone','certType','certNo','issueDate','expiryDate','approval','photoId','certPhotoId','notes','createdAt','updatedAt','basicDate','basicExpiry','wahType','wahDate','wahExpiry','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason','extraPhotoIds'],
   DeleteRequests: ['reqId','kind','personId','personName','reason','requestedBy','requestedAt','status','decidedBy','decidedAt','decisionNote'],
   Submissions: ['subId','kind','personId','date','by','snapshot'],
@@ -357,7 +357,7 @@ function listAll(u) {
   rows('DeleteRequests').forEach(function (d) { if (d.status === 'Pending') pend[d.kind + ':' + d.personId] = d.reqId; });
   var sp = live('Supervisors').map(function (s) { var o = decSup(s, u.role); o.pendingDelete = pend['Supervisor:' + s.id] ? '1' : ''; return o; });
   var cr = live('Scaffolders').map(function (s) { var o = decCrew(s, u.role); o.pendingDelete = pend['Scaffolder:' + s.id] ? '1' : ''; return o; });
-  var ip = live('Inspectors').map(function (s) { var o = decSup(s, u.role); o.pendingDelete = pend['Inspector:' + s.id] ? '1' : ''; return o; });
+  var ip = live('Inspectors').map(function (s) { var o = decSup(s, u.role); o.pinSet = s.pinHash ? '1' : ''; delete o.pinHash; delete o.pinFails; delete o.pinLockUntil; delete o.pinSetAt; o.pendingDelete = pend['Inspector:' + s.id] ? '1' : ''; return o; });
   if (u.role === 'supervisor') {
     sc = sc.filter(function (s) { return s.contractor === u.contractor; });
     sp = sp.filter(function (s) { return s.contractor === u.contractor; });
@@ -374,7 +374,8 @@ function listAll(u) {
   sc.forEach(function (s) { s.handoverDone = hoPass[s.refId] ? '1' : ''; });
   var pt = pendingTagFor(u);
   var rq = rows('ScaffoldRequests').filter(function (x) { return x.status === 'Open' && (u.role !== 'supervisor' || x.contractor === u.contractor); }).map(function (x) { delete x._row; return x; });
-  var out = { ok: true, requests: rq, pendingTag: pt ? decScaffold(pt) : null, today: today(), version: VERSION, user: pub(u), cfg: cfg(), scaffolds: sc, supervisors: sp, inspectors: ip, scaffolders: cr, failByContractor: failBy, users: [], wa: [] };
+  var mr = inspectorRecordFor(u);
+  var out = { ok: true, myPin: { record: !!mr, has: !!(mr && mr.pinHash) }, requests: rq, pendingTag: pt ? decScaffold(pt) : null, today: today(), version: VERSION, user: pub(u), cfg: cfg(), scaffolds: sc, supervisors: sp, inspectors: ip, scaffolders: cr, failByContractor: failBy, users: [], wa: [] };
   if (u.role === 'admin') {
     out.users = rows('Users').map(function (x) { return { email: x.email, name: x.name, role: x.role, contractor: x.contractor, active: x.active }; });
     out.wa = rows('WaQueue').filter(function (w) { return w.status === 'Pending'; }).map(function (w) { delete w._row; return w; });
@@ -507,6 +508,79 @@ function createScaffold(u, p) {
   return withLock(function () { return createScaffoldCore(u, p, false); });
 }
 
+/* ───────────── inspector PIN (set and reset only by email code) ───────────── */
+function inspectorRecordFor(u) {
+  return live('Inspectors').filter(function (x) { return String(x.email || '').toLowerCase() === String(u.email).toLowerCase(); })[0] || null;
+}
+function pinHashOf(email, pin) { return sign('pin:' + String(email).toLowerCase() + ':' + pin); }
+
+// Every inspector-signed action needs the inspector's own PIN, so nobody can inspect on their behalf.
+function needPin(u, p) {
+  var r = inspectorRecordFor(u);
+  if (!r) return;
+  if (!r.pinHash) throw new Error('PIN_NOT_SET: set your inspector PIN first (press Set PIN, a code is sent to your email).');
+  var now = new Date().getTime();
+  if (Number(r.pinLockUntil || 0) > now) throw new Error('PIN locked after too many wrong tries. Try again in ' + Math.ceil((Number(r.pinLockUntil) - now) / 60000) + ' min, or reset your PIN by email.');
+  var pin = String(p.pin || '').trim();
+  if (!/^\d{4,6}$/.test(pin) || pinHashOf(u.email, pin) !== r.pinHash) {
+    var f = Number(r.pinFails || 0) + 1;
+    r.pinFails = String(f);
+    if (f >= 5) { r.pinLockUntil = String(now + 15 * 60000); r.pinFails = '0'; }
+    writeRow('Inspectors', r._row, r);
+    audit(u.email, 'pinFail', r.id);
+    throw new Error('Wrong PIN.' + (f >= 5 ? ' Locked for 15 minutes.' : ' ' + (5 - f) + ' tries left.'));
+  }
+  if (r.pinFails && r.pinFails !== '0') { r.pinFails = '0'; writeRow('Inspectors', r._row, r); }
+}
+
+function pinRequest(u) {
+  var r = inspectorRecordFor(u);
+  if (!r) throw new Error('You are not registered as a scaffold inspector.');
+  var c = CacheService.getScriptCache(), e = String(u.email).toLowerCase();
+  if (c.get('pinsent:' + e)) throw new Error('A code was just sent. Wait a minute before asking again.');
+  var code = String(Math.floor(100000 + Math.random() * 900000));
+  c.put('pinsent:' + e, '1', 60);
+  c.put('pincode:' + e, code, 600);
+  c.remove('pintries:' + e);
+  mail(r.email, 'Scaffold inspector PIN code', 'Your code to set or reset your inspector PIN is ' + code + '\nValid for 10 minutes. Do not share it. If you did not ask for it, ignore this email.');
+  audit(u.email, 'pinRequest', r.id);
+  return { ok: true };
+}
+
+function pinSet(u, p) {
+  return withLock(function () {
+    var r = inspectorRecordFor(u);
+    if (!r) throw new Error('You are not registered as a scaffold inspector.');
+    var c = CacheService.getScriptCache(), e = String(u.email).toLowerCase();
+    var tries = Number(c.get('pintries:' + e) || 0);
+    if (tries >= 5) throw new Error('Too many attempts. Ask for a new code.');
+    var good = c.get('pincode:' + e);
+    if (!good || String(p.code || '').trim() !== good) { c.put('pintries:' + e, String(tries + 1), 600); throw new Error('Wrong or expired code.'); }
+    var pin = String(p.pin || '').trim();
+    if (!/^\d{4,6}$/.test(pin)) throw new Error('The PIN must be 4 to 6 digits.');
+    if (/^(\d)\1+$/.test(pin) || '0123456789'.indexOf(pin) >= 0 || '9876543210'.indexOf(pin) >= 0) throw new Error('Choose a PIN that is not all the same digit or a simple sequence.');
+    c.remove('pincode:' + e);
+    r.pinHash = pinHashOf(u.email, pin); r.pinSetAt = today() + ' ' + nowTime(); r.pinFails = '0'; r.pinLockUntil = '';
+    writeRow('Inspectors', r._row, r);
+    audit(u.email, 'pinSet', r.id);
+    mail(r.email, 'Your inspector PIN was set', 'Your scaffold inspector PIN was set or changed on ' + today() + ' ' + nowTime() + '. If this was not you, tell the admin straight away.');
+    return { ok: true };
+  });
+}
+
+// Admin can switch a PIN off (for example if it may be known by someone else). The inspector sets a new one by email.
+function clearPin(u, p) {
+  need(u, ['admin']);
+  return withLock(function () {
+    var r = live('Inspectors').filter(function (x) { return x.id === p.id; })[0];
+    if (!r) throw new Error('Inspector not found.');
+    r.pinHash = ''; r.pinSetAt = ''; r.pinFails = '0'; r.pinLockUntil = '';
+    writeRow('Inspectors', r._row, r);
+    audit(u.email, 'clearPin', r.id);
+    return { ok: true };
+  });
+}
+
 function preCheckInspection(p) {
   var ids = cfg().checklists.Handover;
   var ans = p.answers || {}, com = p.comments || {};
@@ -527,6 +601,7 @@ function registerAndInspect(u, p) {
   need(u, ['admin', 'inspector']);
   needInspectorApproval(u);
   return withLock(function () {
+    needPin(u, p);
     preCheckInspection(p);
     var req = null;
     if (p.requestId) {
@@ -601,6 +676,7 @@ function submitInspection(u, p) {
   need(u, ['admin', 'inspector', 'supervisor']);
   needInspectorApproval(u);
   return withLock(function () {
+    needPin(u, p);
     var s = rows('Scaffolds').filter(function (x) { return x.refId === p.refId; })[0];
     if (!s) throw new Error('Scaffold not found.');
     return runInspection(u, p, s, false);
@@ -645,7 +721,7 @@ function runInspection(u, p, s, reg) {
       inspId: inspId, refId: s.refId, date: t, time: tm, kind: kind, inspector: u.name, inspectorEmail: u.email,
       result: result, failCount: fails, checklist: JSON.stringify(items), comments: String(p.overall || '').slice(0, 400),
       photoFrontId: fId, photoBackId: bId, createdAt: t + ' ' + tm,
-      declaration: fails ? 'NOT FIT: inspector confirmed the findings; scaffold is NOT fit to use' : 'FIT: inspector confirmed the scaffold was inspected and is fit to use'
+      declaration: (fails ? 'NOT FIT: inspector confirmed the findings; scaffold is NOT fit to use' : 'FIT: inspector confirmed the scaffold was inspected and is fit to use') + (inspectorRecordFor(u) ? ' | signed with inspector PIN' : '')
     });
     var wasRed = s.status === 'DoNotUse';
     s.lastInspectionDate = t;
@@ -679,6 +755,7 @@ function redTag(u, p) {
   need(u, ['admin', 'inspector', 'supervisor']);
   needInspectorApproval(u);
   return withLock(function () {
+    needPin(u, p);
     var s = rows('Scaffolds').filter(function (x) { return x.refId === p.refId; })[0];
     if (!s) throw new Error('Scaffold not found.');
     if (u.role === 'supervisor' && s.contractor !== u.contractor) throw new Error('Not your contractor.');
@@ -706,6 +783,7 @@ function removeRedTag(u, p) {
   need(u, ['admin', 'inspector']);
   needInspectorApproval(u);
   return withLock(function () {
+    needPin(u, p);
     var s = rows('Scaffolds').filter(function (x) { return x.refId === p.refId; })[0];
     if (!s) throw new Error('Scaffold not found.');
     if (s.status !== 'DoNotUse') throw new Error('This scaffold is not red-tagged.');
@@ -770,7 +848,7 @@ function lockedGuard(ex, p, what) {
 }
 function recordSubmission(kind, o, u) {
   var snap = {};
-  Object.keys(o).forEach(function (k) { if (k !== '_row') snap[k] = o[k]; });
+  Object.keys(o).forEach(function (k) { if (k !== '_row' && k !== 'pinHash') snap[k] = o[k]; });
   appendRow('Submissions', { subId: 'SUB-' + pad(nextCounter('SUB'), 5), kind: kind, personId: o.id, date: today() + ' ' + nowTime(), by: u.email, snapshot: JSON.stringify(snap) });
 }
 
@@ -989,7 +1067,8 @@ function saveInspectorInner(u, p) {
   lockedGuard(ex, p, 'inspector record');
   if (p.renew && !p.certPhoto) throw new Error('Upload the photo of the new certificate.');
   var t = today() + ' ' + nowTime();
-  var o = ex || { id: 'INSP-' + pad(nextCounter('INSP'), 3), createdAt: t, certPhotoId: '', extraPhotoIds: '' };
+  var o = ex || { id: 'INSP-' + pad(nextCounter('INSP'), 3), createdAt: t, certPhotoId: '', extraPhotoIds: '', pinHash: '', pinFails: '0', pinLockUntil: '' };
+  if (ex && ex.email !== email) { o.pinHash = ''; o.pinSetAt = ''; }
   o.name = name; o.company = String(p.company || '').trim().slice(0, 60); o.phone = String(p.phone || '').trim(); o.email = email;
   o.certType = String(p.certType || '').trim(); o.certNo = certNo; o.issueDate = p.issueDate || '';
   o.expiryDate = p.expiryDate; o.approval = approval; o.notes = String(p.notes || '').slice(0, 300); o.updatedAt = t;
@@ -1001,6 +1080,7 @@ function saveInspectorInner(u, p) {
   var eu = getUser(email);
   if (!eu) appendRow('Users', { email: email, name: name, role: 'inspector', contractor: '', active: 'TRUE' });
   else if (eu.role === 'viewer') { eu.role = 'inspector'; writeRow('Users', eu._row, eu); }
+  if (!ex) mail(email, 'Scaffold inspector account', 'You are registered as a scaffold inspector.\nOpen the app, log in with the code sent to this email, then press "Set PIN". Your PIN is yours alone: it is needed to sign every inspection, so nobody can inspect on your behalf. Never share it.');
   audit(u.email, ex ? 'editInspector' : 'addInspector', o.id + ' ' + name);
   return o.id;
 }
@@ -1090,7 +1170,7 @@ function runNow(u) {
 var ACTIONS = {
   listAll: listAll, getPhoto: getPhoto,  submitInspection: submitInspection,
   history: history, dismantle: dismantle, saveSupervisor: saveSupervisor, importSupervisors: importSupervisors,
-  registerAndInspect: registerAndInspect, requestScaffold: requestScaffold, uploadTagPhoto: uploadTagPhoto, releaseTagLock: releaseTagLock, saveInspector: saveInspector, addCertPhotos: addCertPhotos, saveTagBack: saveTagBack, saveScaffolder: saveScaffolder, requestDelete: requestDelete, decideDelete: decideDelete, redTag: redTag, removeRedTag: removeRedTag, unlockRecord: unlockRecord, importScaffolders: importScaffolders, saveUser: saveUser, saveConfig: saveConfig, waMark: waMark, runNow: runNow
+  pinRequest: pinRequest, pinSet: pinSet, clearPin: clearPin, registerAndInspect: registerAndInspect, requestScaffold: requestScaffold, uploadTagPhoto: uploadTagPhoto, releaseTagLock: releaseTagLock, saveInspector: saveInspector, addCertPhotos: addCertPhotos, saveTagBack: saveTagBack, saveScaffolder: saveScaffolder, requestDelete: requestDelete, decideDelete: decideDelete, redTag: redTag, removeRedTag: removeRedTag, unlockRecord: unlockRecord, importScaffolders: importScaffolders, saveUser: saveUser, saveConfig: saveConfig, waMark: waMark, runNow: runNow
 };
 
 /* ───────────── web app entry ───────────── */
@@ -1103,7 +1183,7 @@ function route(r) {
   var u = auth(r.token);
   var fn = ACTIONS[a];
   if (!fn) throw new Error('Unknown action.');
-  if (['listAll', 'getPhoto', 'history', 'uploadTagPhoto', 'releaseTagLock'].indexOf(a) < 0) {
+  if (['listAll', 'getPhoto', 'history', 'uploadTagPhoto', 'releaseTagLock', 'pinRequest', 'pinSet'].indexOf(a) < 0) {
     var pt = pendingTagFor(u);
     if (pt) throw new Error('TAG_PHOTO_PENDING: take and upload the photo of the signed tag for ' + pt.refId + ' first. Nothing else is possible until then.');
   }
