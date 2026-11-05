@@ -1,6 +1,14 @@
 SCAFFOLD COMPLIANCE HUB v1.3.0 — GO-LIVE GUIDE
 =====================================================
 
+WHAT IS NEW IN v1.6.0
+• New role ic_admin (IC HSSE Manager / Admin), one login per contractor. In Admin > Users add the person's email, choose role ic_admin and pick the contractor.
+• IC HSSE can only ADD scaffolders, supervisors and inspectors for their own contractor. They cannot edit, renew, unlock, approve, change settings or touch scaffolds.
+• Scaffolders go live at once. Supervisors and inspectors added by IC HSSE are Pending until the HSSE Manager (admin) presses Approve on the record.
+• Status changes (admin and IC HSSE): On leave, Resigned, Demobilised, Left site, Deleted. Date and reason are required and logged. On leave can be returned to Active by IC HSSE; every other status can only be reversed by the HSSE Manager. Supervisor/inspector logins are switched off while not active. The manager is emailed on every IC change.
+• Nothing is erased. Dashboard > People movements shows counts and a list (name, contractor, status, date, reason). IC HSSE sees only their own contractor. Resigned / Demobilised / Left site / Deleted people leave the normal tabs and the daily reminders.
+• Upgrade: paste Code.gs, run setup once (adds 4 status columns to Supervisors, Scaffolders, Inspectors), Deploy > Manage deployments > New version, hard-refresh the site.
+
 WHAT IS NEW IN v1.5.3
 • Contractor isolation: a foreman (supervisor login) sees only their own contractor's scaffolds, supervisors, scaffolders, company name and fail statistics. Other contractors' teams are not sent to the phone at all.
 • Inspectors are shown to a foreman only when the inspector's Company field equals that contractor's code (e.g. PBS). EcoOils inspectors and admins still see everyone.

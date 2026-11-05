@@ -1,19 +1,19 @@
-// VERSION 1.5.6  (bump here and on the var VERSION line below)
+// VERSION 1.6.0  (bump here and on the var VERSION line below)
 /**
  * EcoOils Mentari — Scaffold Inspection Database
  * Backend v1.0.0 · Google Apps Script bound to the Google Sheet.
  * Setup: see SETUP.md. Run setup() once, then deploy as a Web App.
  */
-var VERSION = '1.5.6';
+var VERSION = '1.6.0';
 var ADMIN_EMAIL = 'YOUR_EMAIL@gmail.com';   // first admin (can log in with an emailed code)
 var ADMIN_NAME = 'Iggy';
 var TZ = Session.getScriptTimeZone() || 'Asia/Jakarta';
 var MAX_MAIL_PER_RUN = 80;                 // free Gmail limit is ~100/day
 
 var SHEETS = {
-  Supervisors: ['id','name','contractor','phone','email','certType','certNo','issueDate','expiryDate','approval','certPhotoId','notes','createdAt','updatedAt','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason','extraPhotoIds'],
-  Inspectors: ['id','name','company','phone','email','certType','certNo','issueDate','expiryDate','approval','certPhotoId','extraPhotoIds','notes','createdAt','updatedAt','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason','pinHash','pinSetAt','pinFails','pinLockUntil'],
-  Scaffolders: ['id','name','contractor','role','phone','certType','certNo','issueDate','expiryDate','approval','photoId','certPhotoId','notes','createdAt','updatedAt','basicDate','basicExpiry','wahType','wahDate','wahExpiry','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason','extraPhotoIds'],
+  Supervisors: ['id','name','contractor','phone','email','certType','certNo','issueDate','expiryDate','approval','certPhotoId','notes','createdAt','updatedAt','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason','extraPhotoIds','workStatus','statusDate','statusReason','statusBy'],
+  Inspectors: ['id','name','company','phone','email','certType','certNo','issueDate','expiryDate','approval','certPhotoId','extraPhotoIds','notes','createdAt','updatedAt','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason','pinHash','pinSetAt','pinFails','pinLockUntil','workStatus','statusDate','statusReason','statusBy'],
+  Scaffolders: ['id','name','contractor','role','phone','certType','certNo','issueDate','expiryDate','approval','photoId','certPhotoId','notes','createdAt','updatedAt','basicDate','basicExpiry','wahType','wahDate','wahExpiry','locked','verifiedBy','verifiedAt','deleted','deletedAt','deletedBy','deleteReason','extraPhotoIds','workStatus','statusDate','statusReason','statusBy'],
   DeleteRequests: ['reqId','kind','personId','personName','reason','requestedBy','requestedAt','status','decidedBy','decidedAt','decisionNote'],
   Submissions: ['subId','kind','personId','date','by','snapshot'],
   Scaffolds: ['refId','contractor','type','location','requestedBy','builtById','builtByName','erectedDate','loadClass','loadKg','status','lastInspectionDate','nextDueDate','inspector','tagFrontId','tagBackId','decommDate','notes','createdBy','createdAt','subLocation','redTagAt','redTagBy','redTagReason','redTagPrev','noRungs','noStandards','noLifts','boardingArea','structure','tagPending','tagPendingBy'],
@@ -45,7 +45,7 @@ var LOAD_CLASSES = [
 // Checklist item ids. Labels live in the front-end (EN/ID/MS).
 var CHK_HANDOVER = ['F1','F2','F3','S1','S2','S3','S4','S5','P1','P2','P3','P4','E1','E2','E3','E4','A1','A2','A3','A4','V1','V2','V3','V4','V5'];
 var CHK_WEEKLY = ['W1','W2','W3','W4','W5','W6','W7','W8'];
-var ROLES = ['admin','inspector','supervisor','viewer'];
+var ROLES = ['admin','ic_admin','inspector','supervisor','viewer'];
 
 /* ───────────── setup ───────────── */
 
@@ -310,7 +310,9 @@ function decScaffold(s) {
 }
 
 function supStatus(s) {
+  if (s.workStatus) return s.workStatus;
   if (s.approval === 'Suspended') return 'Suspended';
+  if (s.approval === 'Pending') return 'Pending';
   if (!s.expiryDate || s.expiryDate < today()) return 'Expired';
   return 'Approved';
 }
@@ -320,7 +322,7 @@ function decSup(s, role) {
   Object.keys(s).forEach(function (k) { if (k !== '_row') o[k] = s[k]; });
   o.status = supStatus(s);
   o.daysLeft = s.expiryDate ? daysBetween(today(), s.expiryDate) : null;
-  if (role !== 'admin') { delete o.phone; delete o.email; }
+  if (role !== 'admin' && role !== 'ic_admin') { delete o.phone; delete o.email; }
   return o;
 }
 
@@ -331,6 +333,7 @@ function crewDates(s) {
   return a.sort();
 }
 function crewStatus(s) {
+  if (s.workStatus) return s.workStatus;
   if (s.approval === 'Suspended') return 'Suspended';
   if (isHelper(s)) { if (!s.basicExpiry || !s.wahExpiry) return 'Incomplete'; }
   else if (!s.expiryDate) return 'NoCert';
@@ -345,15 +348,112 @@ function decCrew(s, role) {
   o.status = crewStatus(s);
   var cd = crewDates(s);
   o.daysLeft = cd.length ? daysBetween(today(), cd[0]) : null;
-  if (role !== 'admin') delete o.phone;
+  if (role !== 'admin' && role !== 'ic_admin') delete o.phone;
   return o;
+}
+
+/* ───────────── v1.6.0: IC HSSE role, work status, people movements ───────────── */
+var WORK_STATUS = ['OnLeave', 'Resigned', 'Demobilised', 'LeftSite', 'Deleted'];
+function ownOnly(u) { return u.role === 'supervisor' || u.role === 'ic_admin'; }
+function inWork(r) { return !r.workStatus && r.deleted !== '1'; }                 // normal, active person
+function inTabs(r) { return r.deleted !== '1' && (!r.workStatus || r.workStatus === 'OnLeave'); }
+function personCompany(kind, r) { return String(kind === 'Inspector' ? r.company : r.contractor || '').trim().toUpperCase(); }
+
+function mailAdmins(subject, body) {
+  rows('Users').forEach(function (x) { if (x.active !== 'FALSE' && x.role === 'admin') mail(x.email, subject, body); });
+}
+
+// IC HSSE users may only ADD people for their own contractor. Everything else stays with the manager.
+function icAdd(u, p, kind) {
+  if (u.role !== 'ic_admin') return p;
+  if (p.id || p.renew) throw new Error('Only the HSSE Manager can edit or renew records.');
+  if (!u.contractor) throw new Error('Your login has no contractor. Ask the HSSE Manager.');
+  p.fromImport = false; p.approval = (kind === 'Scaffolder') ? 'Approved' : 'Pending';
+  if (kind === 'Inspector') p.company = u.contractor; else p.contractor = u.contractor;
+  return p;
+}
+
+function movementRows(u) {
+  var out = [];
+  [['Supervisor', 'Supervisors'], ['Scaffolder', 'Scaffolders'], ['Inspector', 'Inspectors']].forEach(function (k) {
+    rows(k[1]).forEach(function (r) {
+      var ws = r.workStatus || (r.deleted === '1' ? 'Deleted' : '');
+      if (!ws) return;
+      var comp = personCompany(k[0], r);
+      if (ownOnly(u) && comp !== String(u.contractor || '').toUpperCase()) return;
+      out.push({ kind: k[0], id: r.id, name: r.name, contractor: comp, role: k[0] === 'Scaffolder' ? (r.role || 'Scaffolder') : k[0], workStatus: ws,
+        statusDate: r.statusDate || String(r.deletedAt || '').slice(0, 10), reason: r.statusReason || r.deleteReason || '', by: r.statusBy || r.deletedBy || '' });
+    });
+  });
+  out.sort(function (a, b) { return String(b.statusDate).localeCompare(String(a.statusDate)); });
+  return out;
+}
+
+function setLoginActive(r, kind, on) {
+  if (kind === 'Scaffolder' || !r.email) return;
+  var lu = getUser(r.email);
+  if (lu && lu.role === kind.toLowerCase()) { lu.active = on ? 'TRUE' : 'FALSE'; writeRow('Users', lu._row, lu); }
+}
+
+function setWorkStatus(u, p) {
+  need(u, ['admin', 'ic_admin']);
+  return withLock(function () {
+    var n = kindSheet(p.kind);
+    if (!n) throw new Error('Unknown record type.');
+    var st = String(p.status || '');
+    if (st !== 'Active' && WORK_STATUS.indexOf(st) < 0) throw new Error('Unknown status.');
+    var r = rows(n).filter(function (x) { return x.id === p.id; })[0];
+    if (!r) throw new Error('Record not found.');
+    if (u.role === 'ic_admin' && personCompany(p.kind, r) !== String(u.contractor || '').toUpperCase()) throw new Error('Not your contractor.');
+    var cur = r.workStatus || (r.deleted === '1' ? 'Deleted' : '');
+    var date = String(p.date || today());
+    if (!isDate(date)) throw new Error('Date must be YYYY-MM-DD.');
+    var reason = String(p.reason || '').trim();
+    if (st !== 'Active' && reason.length < 3) throw new Error('Give a reason.');
+    if (st === 'Active') {
+      if (!cur) throw new Error('This person is already active.');
+      if (cur !== 'OnLeave' && u.role !== 'admin') throw new Error('Only the HSSE Manager can bring someone back after ' + cur + '.');
+    } else if (cur === st) throw new Error('Already ' + st + '.');
+    else if (cur && cur !== 'OnLeave' && st === 'OnLeave') throw new Error('A person who has ' + cur + ' cannot be put on leave.');
+    var t = today() + ' ' + nowTime();
+    if (st === 'Active') {
+      r.workStatus = ''; r.statusDate = date; r.statusReason = reason.slice(0, 300); r.statusBy = u.email;
+      r.deleted = ''; r.deletedAt = ''; r.deletedBy = ''; r.deleteReason = '';
+      setLoginActive(r, p.kind, true);
+    } else {
+      r.workStatus = st; r.statusDate = date; r.statusReason = reason.slice(0, 300); r.statusBy = u.email;
+      if (st === 'Deleted') { r.deleted = '1'; r.deletedAt = t; r.deletedBy = u.email; r.deleteReason = reason.slice(0, 300); }
+      setLoginActive(r, p.kind, false);
+    }
+    writeRow(n, r._row, r);
+    audit(u.email, 'workStatus', p.kind + ' ' + r.id + ' ' + r.name + ' ' + (cur || 'Active') + ' > ' + (st) + ' ' + reason.slice(0, 120));
+    if (u.role === 'ic_admin') mailAdmins('Status change: ' + r.name + ' → ' + st, p.kind + ' ' + r.id + ' ' + r.name + ' (' + personCompany(p.kind, r) + ') is now ' + st + ' as of ' + date + '.\nReason: ' + reason + '\nBy: ' + u.email);
+    return { ok: true, status: st };
+  });
+}
+
+// Manager approves a supervisor/inspector that an IC HSSE user added.
+function approvePerson(u, p) {
+  need(u, ['admin']);
+  return withLock(function () {
+    var n = kindSheet(p.kind);
+    if (!n || p.kind === 'Scaffolder') throw new Error('Only supervisors and inspectors need approval.');
+    var r = live(n).filter(function (x) { return x.id === p.id; })[0];
+    if (!r) throw new Error('Record not found.');
+    if (r.approval !== 'Pending') throw new Error('Not waiting for approval.');
+    r.approval = 'Approved'; r.updatedAt = today() + ' ' + nowTime();
+    writeRow(n, r._row, r);
+    audit(u.email, 'approvePerson', p.kind + ' ' + r.id + ' ' + r.name);
+    if (r.email) mail(r.email, 'Approved: ' + r.name, 'Your ' + p.kind.toLowerCase() + ' record was approved by the HSSE Manager. You can now log in with your email code.');
+    return { ok: true };
+  });
 }
 
 /* ───────────── actions ───────────── */
 
 function cfgFor(u) {
   var g = cfg();
-  if (u.role === 'supervisor') g.contractors = g.contractors.filter(function (x) { return x === String(u.contractor || '').toUpperCase(); });
+  if (ownOnly(u)) g.contractors = g.contractors.filter(function (x) { return x === String(u.contractor || '').toUpperCase(); });
   return g;
 }
 
@@ -361,10 +461,10 @@ function listAll(u) {
   var sc = rows('Scaffolds').map(decScaffold);
   var pend = {};
   rows('DeleteRequests').forEach(function (d) { if (d.status === 'Pending') pend[d.kind + ':' + d.personId] = d.reqId; });
-  var sp = live('Supervisors').map(function (s) { var o = decSup(s, u.role); o.pendingDelete = pend['Supervisor:' + s.id] ? '1' : ''; return o; });
-  var cr = live('Scaffolders').map(function (s) { var o = decCrew(s, u.role); o.pendingDelete = pend['Scaffolder:' + s.id] ? '1' : ''; return o; });
-  var ip = live('Inspectors').map(function (s) { var o = decSup(s, u.role); o.pinSet = s.pinHash ? '1' : ''; delete o.pinHash; delete o.pinFails; delete o.pinLockUntil; delete o.pinSetAt; o.pendingDelete = pend['Inspector:' + s.id] ? '1' : ''; return o; });
-  if (u.role === 'supervisor') {
+  var sp = live('Supervisors').filter(inTabs).map(function (s) { var o = decSup(s, u.role); o.pendingDelete = pend['Supervisor:' + s.id] ? '1' : ''; return o; });
+  var cr = live('Scaffolders').filter(inTabs).map(function (s) { var o = decCrew(s, u.role); o.pendingDelete = pend['Scaffolder:' + s.id] ? '1' : ''; return o; });
+  var ip = live('Inspectors').filter(inTabs).map(function (s) { var o = decSup(s, u.role); o.pinSet = s.pinHash ? '1' : ''; delete o.pinHash; delete o.pinFails; delete o.pinLockUntil; delete o.pinSetAt; o.pendingDelete = pend['Inspector:' + s.id] ? '1' : ''; return o; });
+  if (ownOnly(u)) {
     sc = sc.filter(function (s) { return s.contractor === u.contractor; });
     sp = sp.filter(function (s) { return s.contractor === u.contractor; });
     cr = cr.filter(function (s) { return s.contractor === u.contractor; });
@@ -380,13 +480,13 @@ function listAll(u) {
     if (s && i.result === 'Fail' && i.date >= cutoff) failBy[s.contractor] = (failBy[s.contractor] || 0) + 1;
   });
   sc.forEach(function (s) { s.handoverDone = hoPass[s.refId] ? '1' : ''; });
-  if (u.role === 'supervisor') {
+  if (ownOnly(u)) {
     var mine = {}; mine[u.contractor] = failBy[u.contractor] || 0; failBy = mine;
   }
   var pt = pendingTagFor(u);
-  var rq = rows('ScaffoldRequests').filter(function (x) { return x.status === 'Open' && (u.role !== 'supervisor' || x.contractor === u.contractor); }).map(function (x) { delete x._row; return x; });
+  var rq = rows('ScaffoldRequests').filter(function (x) { return x.status === 'Open' && (!ownOnly(u) || x.contractor === u.contractor); }).map(function (x) { delete x._row; return x; });
   var mr = inspectorRecordFor(u);
-  var out = { ok: true, myPin: { record: !!mr, has: !!(mr && mr.pinHash) }, requests: rq, pendingTag: pt ? decScaffold(pt) : null, today: today(), version: VERSION, user: pub(u), cfg: cfgFor(u), scaffolds: sc, supervisors: sp, inspectors: ip, scaffolders: cr, failByContractor: failBy, users: [], wa: [] };
+  var out = { ok: true, myPin: { record: !!mr, has: !!(mr && mr.pinHash) }, requests: rq, pendingTag: pt ? decScaffold(pt) : null, today: today(), version: VERSION, user: pub(u), cfg: cfgFor(u), scaffolds: sc, supervisors: sp, inspectors: ip, scaffolders: cr, failByContractor: failBy, movements: movementRows(u), users: [], wa: [] };
   if (u.role === 'admin') {
     out.users = rows('Users').map(function (x) { return { email: x.email, name: x.name, role: x.role, contractor: x.contractor, active: x.active }; });
     out.wa = rows('WaQueue').filter(function (w) { return w.status === 'Pending'; }).map(function (w) { delete w._row; return w; });
@@ -814,7 +914,7 @@ function removeRedTag(u, p) {
 function history(u, p) {
   var s = rows('Scaffolds').filter(function (x) { return x.refId === p.refId; })[0];
   if (!s) throw new Error('Scaffold not found.');
-  if (u.role === 'supervisor' && s.contractor !== u.contractor) throw new Error('Not your contractor.');
+  if (ownOnly(u) && s.contractor !== u.contractor) throw new Error('Not your contractor.');
   var list = rows('Inspections').filter(function (i) { return i.refId === p.refId; }).map(function (i) {
     var items = {}; try { items = JSON.parse(i.checklist || '{}'); } catch (e) {}
     var failed = Object.keys(items).filter(function (k) { return items[k].a === 'F'; }).map(function (k) { return { id: k, c: items[k].c }; });
@@ -877,7 +977,7 @@ function saveSupervisorInner(u, p) {
   if (p.issueDate && !isDate(p.issueDate)) throw new Error('Issue date must be YYYY-MM-DD.');
   var email = String(p.email || '').trim().toLowerCase();
   if (email && email.indexOf('@') < 0) throw new Error('Invalid email.');
-  var approval = p.approval === 'Suspended' ? 'Suspended' : 'Approved';
+  var approval = p.approval === 'Suspended' ? 'Suspended' : p.approval === 'Pending' ? 'Pending' : 'Approved';
   var all = live('Supervisors');
   var ex = p.id ? all.filter(function (x) { return x.id === p.id; })[0] : null;
   if (p.id && !ex) throw new Error('Supervisor not found.');
@@ -903,7 +1003,8 @@ function saveSupervisorInner(u, p) {
 }
 
 function saveSupervisor(u, p) {
-  need(u, ['admin']);
+  need(u, ['admin', 'ic_admin']);
+  p = icAdd(u, p, 'Supervisor');
   return withLock(function () { return { ok: true, id: saveSupervisorInner(u, p) }; });
 }
 
@@ -968,7 +1069,8 @@ function saveCrewInner(u, p) {
 }
 
 function saveScaffolder(u, p) {
-  need(u, ['admin']);
+  need(u, ['admin', 'ic_admin']);
+  p = icAdd(u, p, 'Scaffolder');
   return withLock(function () { return { ok: true, id: saveCrewInner(u, p) }; });
 }
 
@@ -1018,6 +1120,7 @@ function requestDelete(u, p) {
     var t = today() + ' ' + nowTime();
     if ((p.kind === 'Supervisor' || p.kind === 'Inspector') && r.email) { var lu = getUser(r.email); if (lu && lu.role === p.kind.toLowerCase()) { lu.active = 'FALSE'; writeRow('Users', lu._row, lu); } }
     r.deleted = '1'; r.deletedAt = t; r.deletedBy = u.email; r.deleteReason = reason.slice(0, 300);
+    r.workStatus = 'Deleted'; r.statusDate = today(); r.statusReason = reason.slice(0, 300); r.statusBy = u.email;
     writeRow(n, r._row, r);
     var reqId = 'DEL-' + pad(nextCounter('DEL'), 4);
     appendRow('DeleteRequests', { reqId: reqId, kind: p.kind, personId: p.id, personName: r.name, reason: reason.slice(0, 300), requestedBy: u.email, requestedAt: t, status: 'Approved', decidedBy: u.email, decidedAt: t, decisionNote: 'Direct delete by admin' });
@@ -1070,7 +1173,7 @@ function saveInspectorInner(u, p) {
   if (!certNo) throw new Error('Certificate number is required.');
   if (!isDate(p.expiryDate)) throw new Error('Expiry date must be YYYY-MM-DD.');
   if (p.issueDate && !isDate(p.issueDate)) throw new Error('Issue date must be YYYY-MM-DD.');
-  var approval = p.approval === 'Suspended' ? 'Suspended' : 'Approved';
+  var approval = p.approval === 'Suspended' ? 'Suspended' : p.approval === 'Pending' ? 'Pending' : 'Approved';
   var all = live('Inspectors');
   var ex = p.id ? all.filter(function (x) { return x.id === p.id; })[0] : null;
   if (p.id && !ex) throw new Error('Inspector not found.');
@@ -1097,7 +1200,8 @@ function saveInspectorInner(u, p) {
 }
 
 function saveInspector(u, p) {
-  need(u, ['admin']);
+  need(u, ['admin', 'ic_admin']);
+  p = icAdd(u, p, 'Inspector');
   return withLock(function () { return { ok: true, id: saveInspectorInner(u, p) }; });
 }
 
@@ -1129,9 +1233,9 @@ function saveUser(u, p) {
     if (email.indexOf('@') < 0) throw new Error('Invalid email.');
     if (ROLES.indexOf(p.role) < 0) throw new Error('Invalid role.');
     var contractor = String(p.contractor || '').toUpperCase();
-    if (p.role === 'supervisor' && cfg().contractors.indexOf(contractor) < 0) throw new Error('A supervisor user needs a contractor.');
+    if ((p.role === 'supervisor' || p.role === 'ic_admin') && cfg().contractors.indexOf(contractor) < 0) throw new Error('A supervisor or IC HSSE user needs a contractor.');
     var ex = getUser(email);
-    var o = { email: email, name: String(p.name || email).trim(), role: p.role, contractor: p.role === 'supervisor' ? contractor : '', active: p.active === false || p.active === 'FALSE' ? 'FALSE' : 'TRUE' };
+    var o = { email: email, name: String(p.name || email).trim(), role: p.role, contractor: (p.role === 'supervisor' || p.role === 'ic_admin') ? contractor : '', active: p.active === false || p.active === 'FALSE' ? 'FALSE' : 'TRUE' };
     if (ex && ex.role === 'admin' && ex.email === u.email && (o.role !== 'admin' || o.active === 'FALSE')) throw new Error('You cannot remove your own admin access.');
     if (ex) writeRow('Users', ex._row, o); else appendRow('Users', o);
     audit(u.email, 'saveUser', email + ' ' + o.role);
@@ -1181,7 +1285,7 @@ function runNow(u) {
 var ACTIONS = {
   listAll: listAll, getPhoto: getPhoto,  submitInspection: submitInspection,
   history: history, dismantle: dismantle, saveSupervisor: saveSupervisor, importSupervisors: importSupervisors,
-  pinRequest: pinRequest, pinSet: pinSet, clearPin: clearPin, registerAndInspect: registerAndInspect, requestScaffold: requestScaffold, uploadTagPhoto: uploadTagPhoto, releaseTagLock: releaseTagLock, saveInspector: saveInspector, addCertPhotos: addCertPhotos, saveTagBack: saveTagBack, saveScaffolder: saveScaffolder, requestDelete: requestDelete, decideDelete: decideDelete, redTag: redTag, removeRedTag: removeRedTag, unlockRecord: unlockRecord, importScaffolders: importScaffolders, saveUser: saveUser, saveConfig: saveConfig, waMark: waMark, runNow: runNow
+  setWorkStatus: setWorkStatus, approvePerson: approvePerson, pinRequest: pinRequest, pinSet: pinSet, clearPin: clearPin, registerAndInspect: registerAndInspect, requestScaffold: requestScaffold, uploadTagPhoto: uploadTagPhoto, releaseTagLock: releaseTagLock, saveInspector: saveInspector, addCertPhotos: addCertPhotos, saveTagBack: saveTagBack, saveScaffolder: saveScaffolder, requestDelete: requestDelete, decideDelete: decideDelete, redTag: redTag, removeRedTag: removeRedTag, unlockRecord: unlockRecord, importScaffolders: importScaffolders, saveUser: saveUser, saveConfig: saveConfig, waMark: waMark, runNow: runNow
 };
 
 /* ───────────── web app entry ───────────── */
@@ -1221,7 +1325,7 @@ function dailyReminders() {
 function runReminders() {
   mailCount = 0;
   var t = today(), c = cfg();
-  var sups = live('Supervisors'), supById = {};
+  var sups = live('Supervisors').filter(inWork), supById = {};
   rows('Supervisors').forEach(function (s) { supById[s.id] = s; });
   var done = {};
   rows('WaQueue').forEach(function (w) { if (w.date === t) done[w.key] = 1; });
@@ -1269,7 +1373,7 @@ function runReminders() {
     }
   });
 
-  live('Scaffolders').forEach(function (s) {
+  live('Scaffolders').filter(inWork).forEach(function (s) {
     if (s.approval === 'Suspended') return;
     var helper = isHelper(s);
     if (helper ? (!s.basicExpiry || !s.wahExpiry) : !s.expiryDate) crewNoCert.push(s.name + ' · ' + s.contractor + (helper ? ' (training missing)' : ''));
