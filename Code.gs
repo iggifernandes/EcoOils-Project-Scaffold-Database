@@ -1,10 +1,10 @@
-// VERSION 1.6.0  (bump here and on the var VERSION line below)
+// VERSION 1.6.1  (bump here and on the var VERSION line below)
 /**
  * EcoOils Mentari — Scaffold Inspection Database
  * Backend v1.0.0 · Google Apps Script bound to the Google Sheet.
  * Setup: see SETUP.md. Run setup() once, then deploy as a Web App.
  */
-var VERSION = '1.6.0';
+var VERSION = '1.6.1';
 var ADMIN_EMAIL = 'YOUR_EMAIL@gmail.com';   // first admin (can log in with an emailed code)
 var ADMIN_NAME = 'Iggy';
 var TZ = Session.getScriptTimeZone() || 'Asia/Jakarta';
@@ -549,6 +549,15 @@ function needInspectorApproval(u) {
   if (st !== 'Approved') throw new Error('Your inspector certificate is ' + st + '. You cannot inspect or tag scaffolds until the admin approves it.');
 }
 
+// v1.6.1: extra certificate pages sent together with the form (up to 12 per record)
+function applyExtras(o, photos) {
+  if (!Array.isArray(photos) || !photos.length) return;
+  var list = extraIds(o);
+  if (list.length + photos.length > 12) throw new Error('At most 12 extra photos per record.');
+  photos.forEach(function (d) { list.push(saveImage('_certificates', d, o.id + '_extra_' + today() + '_' + (list.length + 1) + '.jpg')); });
+  o.extraPhotoIds = JSON.stringify(list);
+}
+
 function applyTagBack(s, p) {
   ['noRungs', 'noStandards', 'noLifts', 'boardingArea', 'structure'].forEach(function (k) { if (p[k] !== undefined) s[k] = tb(p[k]); });
 }
@@ -990,6 +999,7 @@ function saveSupervisorInner(u, p) {
   o.expiryDate = p.expiryDate; o.approval = approval; o.notes = String(p.notes || '').slice(0, 300); o.updatedAt = t;
   if (!p.fromImport && !p.certPhoto && !o.certPhotoId) throw new Error('Upload the photo of the certificate.');
   if (p.certPhoto) o.certPhotoId = saveImage('_certificates', p.certPhoto, o.id + '_' + today() + '.jpg');
+  applyExtras(o, p.extraPhotos);
   o.locked = '1'; o.verifiedBy = u.email; o.verifiedAt = t;
   if (ex) writeRow('Supervisors', ex._row, o); else appendRow('Supervisors', o);
   recordSubmission('Supervisor', o, u);
@@ -1061,6 +1071,7 @@ function saveCrewInner(u, p) {
   o.notes = String(p.notes || '').slice(0, 300); o.updatedAt = t;
   if (p.photo) o.photoId = saveImage('_scaffolders', p.photo, o.id + '_photo_' + today() + '.jpg');
   if (p.certPhoto) o.certPhotoId = saveImage('_certificates', p.certPhoto, o.id + '_cert_' + today() + '.jpg');
+  applyExtras(o, p.extraPhotos);
   o.locked = '1'; o.verifiedBy = u.email; o.verifiedAt = t;
   if (ex) writeRow('Scaffolders', ex._row, o); else appendRow('Scaffolders', o);
   recordSubmission('Scaffolder', o, u);
@@ -1188,6 +1199,7 @@ function saveInspectorInner(u, p) {
   o.expiryDate = p.expiryDate; o.approval = approval; o.notes = String(p.notes || '').slice(0, 300); o.updatedAt = t;
   if (!p.certPhoto && !o.certPhotoId) throw new Error('Upload the photo of the certificate.');
   if (p.certPhoto) o.certPhotoId = saveImage('_certificates', p.certPhoto, o.id + '_' + today() + '.jpg');
+  applyExtras(o, p.extraPhotos);
   o.locked = '1'; o.verifiedBy = u.email; o.verifiedAt = t;
   if (ex) writeRow('Inspectors', ex._row, o); else appendRow('Inspectors', o);
   recordSubmission('Inspector', o, u);

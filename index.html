@@ -63,7 +63,7 @@ textarea{min-height:64px}
 img.full{width:100%}
 .login{max-width:380px;margin:40px auto}
 table{width:100%;border-collapse:collapse;font-size:13px}td,th{text-align:left;padding:6px;border-bottom:1px solid var(--line)}
-label.chk{text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);display:flex;gap:8px;align-items:flex-start;margin:12px 0}label.chk input{margin-top:3px}.lockbar{background:#fffbe6;border-left:3px solid var(--y);padding:8px 12px;margin:8px 0;font-size:13px}
+label.chk{text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);display:flex;gap:8px;align-items:flex-start;margin:12px 0}label.chk input{width:auto;flex:none;margin:3px 0 0;padding:0}label.chk span{flex:1;text-align:left}.lockbar{background:#fffbe6;border-left:3px solid var(--y);padding:8px 12px;margin:8px 0;font-size:13px}
 /* eco-std-header */
 header.eh{background:#fff;color:#231f20;padding:10px 16px 6px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid #dcdcdc;position:relative;z-index:5;margin:0;width:auto;max-width:none;height:auto;min-height:0;box-shadow:none;font-family:Jost,system-ui,Arial,sans-serif;font-size:16px;line-height:1.45}
 header.eh .eh-logo{height:44px;width:auto;max-width:58%;object-fit:contain;display:block;margin:0}
@@ -104,7 +104,7 @@ header.eh .eh-l button.on,header.eh .eh-l button.active,header.eh .eh-l button[a
 details.bk{margin:10px 0;border:1px solid var(--line);padding:6px 10px}
 details.bk summary{cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--g)}
 .lcls{display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);margin:0}
-.lcls input{width:auto}
+.lcls input{width:auto}.pvs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.pvs img{height:70px;border:1px solid #ccc}
 .bchip{display:inline-block;background:#f3f3f3;border:1px solid var(--line);padding:3px 8px;margin:2px 4px 2px 0;font-size:13px}
 .bchip a{cursor:pointer;margin-left:6px;color:var(--r)}
 </style>
@@ -117,7 +117,7 @@ details.bk summary{cursor:pointer;font-size:12px;text-transform:uppercase;letter
 'use strict';
 /* ================= CONFIG ================= */
 var API_URL = 'https://script.google.com/macros/s/AKfycbxbNSJGjm2iB6SA6z2wiXMS_R1nuCZU3cdeHR62QK0YkxRpZn0nK3_oRvOZX4MfHb4L/exec';
-var VERSION = '1.6.0';
+var VERSION = '1.6.1';
 
 /* ================= i18n ================= */
 var L = {
@@ -469,7 +469,7 @@ function vCrew(el){
   if(mng){$('acrew').onclick=function(){crewForm(null);};if(admin)$('icrew').onclick=crewImport;}
 }
 function crewForm(id,renew){
-  var s=id?S.crew.filter(function(x){return x.id===id;})[0]:{};var ph=null,cph=null;var dis=renew?' disabled':'';
+  var s=id?S.crew.filter(function(x){return x.id===id;})[0]:{};var ph=null,cph=null,cext=[];var dis=renew?' disabled':'';
   var m=modal('<form id="crf"><h2>'+(renew?t('renew'):id?t('edit'):t('addCrew'))+'</h2><label>'+t('name')+'</label><input name="name" value="'+esc(s.name)+'" required'+dis+'>'+
    '<div class="row2"><div><label>'+t('contractor')+'</label><select name="contractor"'+dis+'>'+S.cfg.contractors.map(function(c){return '<option '+(s.contractor===c?'selected':'')+'>'+c+'</option>';}).join('')+'</select></div>'+
    '<div><label>'+t('crewRole')+'</label><input name="role" id="crole" list="roles" value="'+esc(s.role||'Scaffolder')+'"'+dis+'><datalist id="roles"><option>Scaffolder</option><option>Scaffolder Leader</option><option>Scaffolder Helper</option><option>Basic Scaffolder</option><option>Trainee</option></datalist></div></div>'+
@@ -482,15 +482,15 @@ function crewForm(id,renew){
    '<div class="row2"><div><label>'+t('issue')+'</label><input type="date" name="wahDate" id="wd" value="'+esc(s.wahDate||'')+'"></div><div><label>'+t('expiry')+'</label><input type="date" name="wahExpiry" id="we" value="'+esc(s.wahExpiry||'')+'"></div></div>'+
    '<label>'+t('approval')+'</label><select name="approval"'+dis+'><option value="Approved" '+(s.approval!=='Suspended'?'selected':'')+'>'+t('Approved')+'</option><option value="Suspended" '+(s.approval==='Suspended'?'selected':'')+'>'+t('Suspended')+'</option></select>'+
    '<label>'+t('crewPhoto')+'</label><input type="file" accept="image/*" id="phf"><img class="pv" id="phv" style="display:none">'+(s.photoId?'<p><button type="button" class="btn sec sm" data-photo="'+esc(s.photoId)+'">'+t('viewPhoto')+'</button></p>':'')+
-   '<label>'+t('certPhoto')+'</label><input type="file" accept="image/*" id="cpf"><img class="pv" id="cpv2" style="display:none">'+(s.certPhotoId&&!renew?'<p><button type="button" class="btn sec sm" data-photo="'+esc(s.certPhotoId)+'">'+t('viewPhoto')+'</button></p>':'')+
+   '<label>'+t('certPhoto')+'</label><input type="file" accept="image/*" id="cpf" multiple><div id="cpv2" class="pvs"></div>'+(s.certPhotoId&&!renew?'<p><button type="button" class="btn sec sm" data-photo="'+esc(s.certPhotoId)+'">'+t('viewPhoto')+'</button></p>':'')+
    '<label>'+t('notes')+'</label><textarea name="notes"'+dis+'>'+esc(s.notes||'')+'</textarea>'+verifyBox()+'<p><button class="btn" type="submit">'+t('save')+'</button> <button type="button" class="btn sec" id="x">'+t('cancel')+'</button> '+(renew?'':delBtn(s))+'</p></form>');
   m.querySelector('#x').onclick=function(){m.remove();};
   if(!renew)wireDel(m,'Scaffolder',s);
   function helperUI(){var h=isHelperRole(m.querySelector('#crole').value);m.querySelector('#hnote').style.display=h?'block':'none';['bd','be','wt','wd','we'].forEach(function(i){m.querySelector('#'+i).required=h;});}
   helperUI();m.querySelector('#crole').oninput=helperUI;
   function pick(inp,prev,set){inp.onchange=function(){var f=inp.files[0];if(!f)return;compress(f).then(function(d){set(d);var p=m.querySelector(prev);p.src=d;p.style.display='block';}).catch(function(e){toast(e.message,1);});};}
-  pick(m.querySelector('#phf'),'#phv',function(d){ph=d;});pick(m.querySelector('#cpf'),'#cpv2',function(d){cph=d;});
-  m.querySelector('#crf').onsubmit=function(e){e.preventDefault();var form=e.target;var d={id:id||undefined};new FormData(form).forEach(function(v,k){d[k]=v;});if(ph)d.photo=ph;if(cph)d.certPhoto=cph;
+  pick(m.querySelector('#phf'),'#phv',function(d){ph=d;});m.querySelector('#cpf').onchange=function(){var fl=[].slice.call(this.files);if(!fl.length)return;Promise.all(fl.map(compress)).then(function(ds){cph=ds[0];cext=ds.slice(1);m.querySelector('#cpv2').innerHTML=ds.map(function(x){return '<img src="'+x+'">';}).join('');}).catch(function(e){toast(e.message,1);});};
+  m.querySelector('#crf').onsubmit=function(e){e.preventDefault();var form=e.target;var d={id:id||undefined};new FormData(form).forEach(function(v,k){d[k]=v;});if(ph)d.photo=ph;if(cph)d.certPhoto=cph;if(cext.length)d.extraPhotos=cext;
    if(renew)d.renew=true;
    if(d.certNo&&!cph&&(renew||!s.certPhotoId)){toast(t('needCertPhoto'),1);return;}
    askConfirm(function(){d.verified=true;d.confirmed=true;var b=form.querySelector('button[type=submit]');b.disabled=true;toast(t('uploading'));
@@ -576,19 +576,19 @@ function wireLock(m,kind,s,renewFn){
 }
 function modal(html,sticky){var m=document.createElement('div');m.className='modal';m.innerHTML='<div>'+html+'</div>';document.body.appendChild(m);if(!sticky)m.addEventListener('click',function(e){if(e.target===m&&!m.querySelector('input:not([type=hidden]),textarea,select'))m.remove();});return m;}
 function supForm(id,renew){
-  var s=id?S.sup.filter(function(x){return x.id===id;})[0]:{};var photo=null;var dis=renew?' disabled':'';
+  var s=id?S.sup.filter(function(x){return x.id===id;})[0]:{};var photo=null,extras=[];var dis=renew?' disabled':'';
   var m=modal('<form id="sf"><h2>'+(renew?t('renew'):id?t('edit'):t('addSup'))+'</h2><label>'+t('name')+'</label><input name="name" value="'+esc(s.name)+'" required'+dis+'>'+
    '<div class="row2"><div><label>'+t('contractor')+'</label><select name="contractor"'+dis+'>'+S.cfg.contractors.map(function(c){return '<option '+(s.contractor===c?'selected':'')+'>'+c+'</option>';}).join('')+'</select></div><div><label>'+t('phone')+'</label><input name="phone" value="'+esc(s.phone||'')+'" placeholder="08xxxxxxxxxx"'+dis+'></div></div>'+
    '<label>'+t('email')+'</label><input name="email" type="email" value="'+esc(s.email||'')+'"'+dis+'>'+
    '<div class="row2"><div><label>'+t('certType')+'</label><input name="certType" value="'+esc(renew?'':s.certType||'')+'"></div><div><label>'+t('certNo')+'</label><input name="certNo" value="'+esc(renew?'':s.certNo||'')+'" required></div></div>'+
    '<div class="row2"><div><label>'+t('issue')+'</label><input type="date" name="issueDate" value="'+esc(renew?'':s.issueDate||'')+'"></div><div><label>'+t('expiry')+'</label><input type="date" name="expiryDate" value="'+esc(renew?'':s.expiryDate||'')+'" required></div></div>'+
    '<label>'+t('approval')+'</label><select name="approval"'+dis+'><option value="Approved" '+(s.approval!=='Suspended'?'selected':'')+'>'+t('Approved')+'</option><option value="Suspended" '+(s.approval==='Suspended'?'selected':'')+'>'+t('Suspended')+'</option></select>'+
-   '<label>'+t('certPhoto')+'</label><input type="file" accept="image/*" id="cph"><img class="pv" id="cpv" style="display:none">'+(s.certPhotoId&&!renew?'<p><button type="button" class="btn sec sm" data-photo="'+esc(s.certPhotoId)+'">'+t('viewPhoto')+'</button></p>':'')+
+   '<label>'+t('certPhoto')+'</label><input type="file" accept="image/*" id="cph" multiple><div id="cpv" class="pvs"></div>'+(s.certPhotoId&&!renew?'<p><button type="button" class="btn sec sm" data-photo="'+esc(s.certPhotoId)+'">'+t('viewPhoto')+'</button></p>':'')+
    '<label>'+t('notes')+'</label><textarea name="notes"'+dis+'>'+esc(s.notes||'')+'</textarea>'+verifyBox()+'<p><button class="btn" type="submit">'+t('save')+'</button> <button type="button" class="btn sec" id="x">'+t('cancel')+'</button> '+(renew?'':delBtn(s))+'</p></form>');
   m.querySelector('#x').onclick=function(){m.remove();};
   if(!renew)wireDel(m,'Supervisor',s);
-  m.querySelector('#cph').onchange=function(){var f=this.files[0];if(!f)return;compress(f).then(function(d){photo=d;var p=m.querySelector('#cpv');p.src=d;p.style.display='block';});};
-  m.querySelector('#sf').onsubmit=function(e){e.preventDefault();var form=e.target;var d={id:id||undefined};new FormData(form).forEach(function(v,k){d[k]=v;});if(photo)d.certPhoto=photo;if(renew)d.renew=true;
+  m.querySelector('#cph').onchange=function(){var fl=[].slice.call(this.files);if(!fl.length)return;Promise.all(fl.map(compress)).then(function(ds){photo=ds[0];extras=ds.slice(1);var p=m.querySelector('#cpv');p.innerHTML=ds.map(function(x){return '<img src="'+x+'">';}).join('');}).catch(function(e){toast(e.message,1);});};
+  m.querySelector('#sf').onsubmit=function(e){e.preventDefault();var form=e.target;var d={id:id||undefined};new FormData(form).forEach(function(v,k){d[k]=v;});if(photo)d.certPhoto=photo;if(extras.length)d.extraPhotos=extras;if(renew)d.renew=true;
    if(!photo&&(renew||!s.certPhotoId)){toast(t('needCertPhoto'),1);return;}
    askConfirm(function(){d.verified=true;d.confirmed=true;var b=form.querySelector('button[type=submit]');b.disabled=true;
     api('saveSupervisor',d).then(function(){return refresh();}).then(function(){m.remove();render();if(role()==='ic_admin')toast(t('pendApprove'));}).catch(function(x){toast(x.message,1);b.disabled=false;});});};
@@ -619,19 +619,19 @@ function inpView(id){
   m.addEventListener('click',function(e){var p=e.target.getAttribute&&e.target.getAttribute('data-photo');if(p)showPhoto(p);});
 }
 function inpForm(id,renew){
-  var s=id?(S.insl||[]).filter(function(x){return x.id===id;})[0]:{};var photo=null;var dis=renew?' disabled':'';
+  var s=id?(S.insl||[]).filter(function(x){return x.id===id;})[0]:{};var photo=null,extras=[];var dis=renew?' disabled':'';
   var m=modal('<form id="sf"><h2>'+(renew?t('renew'):id?t('edit'):t('addInsp'))+'</h2><label>'+t('name')+'</label><input name="name" value="'+esc(s.name)+'" required'+dis+'>'+
    '<div class="row2"><div><label>'+t('company')+'</label><input name="company" value="'+esc(s.company||'')+'"'+dis+'></div><div><label>'+t('phone')+'</label><input name="phone" value="'+esc(s.phone||'')+'" placeholder="08xxxxxxxxxx"'+dis+'></div></div>'+
    '<label>'+t('email')+' (login)</label><input name="email" type="email" value="'+esc(s.email||'')+'" required'+dis+'>'+
    '<div class="row2"><div><label>'+t('certType')+'</label><input name="certType" value="'+esc(renew?'':s.certType||'')+'"></div><div><label>'+t('certNo')+'</label><input name="certNo" value="'+esc(renew?'':s.certNo||'')+'" required></div></div>'+
    '<div class="row2"><div><label>'+t('issue')+'</label><input type="date" name="issueDate" value="'+esc(renew?'':s.issueDate||'')+'"></div><div><label>'+t('expiry')+'</label><input type="date" name="expiryDate" value="'+esc(renew?'':s.expiryDate||'')+'" required></div></div>'+
    '<label>'+t('approval')+'</label><select name="approval"'+dis+'><option value="Approved" '+(s.approval!=='Suspended'?'selected':'')+'>'+t('Approved')+'</option><option value="Suspended" '+(s.approval==='Suspended'?'selected':'')+'>'+t('Suspended')+'</option></select>'+
-   '<label>'+t('certPhoto')+'</label><input type="file" accept="image/*" id="cph"><img class="pv" id="cpv" style="display:none">'+(s.certPhotoId&&!renew?'<p><button type="button" class="btn sec sm" data-photo="'+esc(s.certPhotoId)+'">'+t('viewPhoto')+'</button></p>':'')+
+   '<label>'+t('certPhoto')+'</label><input type="file" accept="image/*" id="cph" multiple><div id="cpv" class="pvs"></div>'+(s.certPhotoId&&!renew?'<p><button type="button" class="btn sec sm" data-photo="'+esc(s.certPhotoId)+'">'+t('viewPhoto')+'</button></p>':'')+
    '<label>'+t('notes')+'</label><textarea name="notes"'+dis+'>'+esc(s.notes||'')+'</textarea>'+verifyBox()+'<p><button class="btn" type="submit">'+t('save')+'</button> <button type="button" class="btn sec" id="x">'+t('cancel')+'</button> '+(renew?'':delBtn(s))+'</p></form>');
   m.querySelector('#x').onclick=function(){m.remove();};
   if(!renew)wireDel(m,'Inspector',s);
-  m.querySelector('#cph').onchange=function(){var f=this.files[0];if(!f)return;compress(f).then(function(d){photo=d;var p=m.querySelector('#cpv');p.src=d;p.style.display='block';});};
-  m.querySelector('#sf').onsubmit=function(e){e.preventDefault();var form=e.target;var d={id:id||undefined};new FormData(form).forEach(function(v,k){d[k]=v;});if(photo)d.certPhoto=photo;if(renew)d.renew=true;
+  m.querySelector('#cph').onchange=function(){var fl=[].slice.call(this.files);if(!fl.length)return;Promise.all(fl.map(compress)).then(function(ds){photo=ds[0];extras=ds.slice(1);var p=m.querySelector('#cpv');p.innerHTML=ds.map(function(x){return '<img src="'+x+'">';}).join('');}).catch(function(e){toast(e.message,1);});};
+  m.querySelector('#sf').onsubmit=function(e){e.preventDefault();var form=e.target;var d={id:id||undefined};new FormData(form).forEach(function(v,k){d[k]=v;});if(photo)d.certPhoto=photo;if(extras.length)d.extraPhotos=extras;if(renew)d.renew=true;
    if(!photo&&(renew||!s.certPhotoId)){toast(t('needCertPhoto'),1);return;}
    askConfirm(function(){d.verified=true;d.confirmed=true;var b=form.querySelector('button[type=submit]');b.disabled=true;
     api('saveInspector',d).then(function(){return refresh();}).then(function(){m.remove();render();if(role()==='ic_admin')toast(t('pendApprove'));}).catch(function(x){toast(x.message,1);b.disabled=false;});});};
