@@ -51,7 +51,7 @@ WHAT IS NEW IN v1.1.6
 • Upgrade: paste Code.gs, run setup once, Deploy > Manage deployments > New version.
 
 WHAT IS NEW IN v1.1.3
-• Main Location is now a dropdown of the 35 locations from the UA/UC Report app (preloaded). Admin > Settings > Main locations lets you edit the list, or press "Sync from UA/UC Report app" to pull the latest list and then Save.
+• Main Location is now a dropdown of the 35 locations from the site (preloaded). Admin > Settings > Main locations lets you edit the list, or press "Sync from UA/UC Report app" to pull the latest list and then Save.
 • Sub Location is entered by the INSPECTOR at the Handover inspection (required). It then shows next to the main location everywhere (lists, detail, CSV, reminders).
 • All fields are mandatory: new scaffold (main location, requested by, built by, date, load class, notes), Handover sub location, and overall comments on every inspection. Checklist items, tag photos and failed-item comments were already required.
 • Upgrade: paste the new Code.gs, run setup once (adds the new column and location list), Deploy > Manage deployments > New version. Replace index.html on GitHub (done for you), hard-refresh.

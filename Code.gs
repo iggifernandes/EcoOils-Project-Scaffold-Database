@@ -1,10 +1,10 @@
-// VERSION 1.5.3  (bump here and on the var VERSION line below)
+// VERSION 1.5.6  (bump here and on the var VERSION line below)
 /**
  * EcoOils Mentari — Scaffold Inspection Database
  * Backend v1.0.0 · Google Apps Script bound to the Google Sheet.
  * Setup: see SETUP.md. Run setup() once, then deploy as a Web App.
  */
-var VERSION = '1.5.3';
+var VERSION = '1.5.6';
 var ADMIN_EMAIL = 'YOUR_EMAIL@gmail.com';   // first admin (can log in with an emailed code)
 var ADMIN_NAME = 'Iggy';
 var TZ = Session.getScriptTimeZone() || 'Asia/Jakarta';
@@ -31,7 +31,7 @@ var DEFAULT_CONFIG = {
   intervalDays: '7',
   contractors: 'GSB,WEN,KKS,PBS',
   types: 'T:Tube & Coupler|S:System (Cuplock/Ringlock)|M:Mobile Tower|H:Hanging / Suspended|X:Other',
-  // Main locations = the UA/UC Report app location list. Admin can edit or re-sync it under Settings.
+  // Main locations = the site location list. Admin can edit it under Settings.
   mainLocations: 'ADMINISTRATION BUILDING|BLOCK 6B|COOLING TOWER|CONTROL ROOM, MCC ROOM|DDE TREATMENT PLANT (DTP)|DIESEL TANK|DIRTY COOLING TOWER|DRY AND LIQUID CHEMICAL STORAGE|EFFLUENT TREATMENT PLANT (ETP)|ELECTRICAL SUBSTATION (PLN)|EXTRACTION PLANT|FA PLANT|FIRE WATER PUMP HOUSE|FIRE WATER TANK|HEXANE AND DIESEL RECEIVING BAY|HEXANE TANK|LOADING/UNLOADING AREA (PUMP HOUSE)|OFFICE VEHICLE PARKING AREA|OIL POLISHING PLANT|PIPE RACK|PRE TREATMENT UNIT (PTU)|RAW WATER PIT|SCHEDULED & DOMESTIC WASTE SHED|SECURITY BUILDING|SECURITY POST|SILO|TANK FARM|TRUCK PARKING AREA|VAPOR ABSORPTION MACHINE (VAM) SHED|WAREHOUSE|WASTE WATER TREATMENT PLANT (WWTP)|WATER TANK|WATER TREATMENT PLANT (WTP) AND WATER TANKS|WEIGHT BRIDGE|WORKSHOP AREA'
 };
 
@@ -480,7 +480,7 @@ function createScaffoldCore(u, p, quiet, dry) {
     var notes = String(p.notes || '').trim();
     if (!location || !requestedBy || !notes) throw new Error('All fields are required: main location, requested by and notes.');
     var known = c.mainLocations.filter(function (x) { return x.toUpperCase() === location.toUpperCase(); })[0];
-    if (!known) throw new Error('Main location must be chosen from the list (UA/UC Report locations).');
+    if (!known) throw new Error('Main location must be chosen from the list.');
     location = known;
     var lc = LOAD_CLASSES.filter(function (x) { return x.k === p.loadClass; })[0];
     if (!lc) throw new Error('Choose a load class.');
