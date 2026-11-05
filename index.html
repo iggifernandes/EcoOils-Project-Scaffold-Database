@@ -116,7 +116,7 @@ details.bk summary{cursor:pointer;font-size:12px;text-transform:uppercase;letter
 'use strict';
 /* ================= CONFIG ================= */
 var API_URL = 'https://script.google.com/macros/s/AKfycbxbNSJGjm2iB6SA6z2wiXMS_R1nuCZU3cdeHR62QK0YkxRpZn0nK3_oRvOZX4MfHb4L/exec';
-var VERSION = '1.5.6';
+var VERSION = '1.5.7';
 
 /* ================= i18n ================= */
 var L = {
@@ -545,7 +545,7 @@ function wireLock(m,kind,s,renewFn){
   m.querySelector('#unlgo').onclick=function(){var r=m.querySelector('#unr').value.trim();if(r.length<5){toast(t('unlockReason'),1);return;}
     api('unlockRecord',{kind:kind,id:s.id,reason:r}).then(function(){return refresh();}).then(function(){m.remove();toast(t('unlockedOk'));render();}).catch(function(x){toast(x.message,1);});};
 }
-function modal(html,sticky){var m=document.createElement('div');m.className='modal';m.innerHTML='<div>'+html+'</div>';document.body.appendChild(m);if(!sticky)m.addEventListener('click',function(e){if(e.target===m)m.remove();});return m;}
+function modal(html,sticky){var m=document.createElement('div');m.className='modal';m.innerHTML='<div>'+html+'</div>';document.body.appendChild(m);if(!sticky)m.addEventListener('click',function(e){if(e.target===m&&!m.querySelector('input:not([type=hidden]),textarea,select'))m.remove();});return m;}
 function supForm(id,renew){
   var s=id?S.sup.filter(function(x){return x.id===id;})[0]:{};var photo=null;var dis=renew?' disabled':'';
   var m=modal('<form id="sf"><h2>'+(renew?t('renew'):id?t('edit'):t('addSup'))+'</h2><label>'+t('name')+'</label><input name="name" value="'+esc(s.name)+'" required'+dis+'>'+
