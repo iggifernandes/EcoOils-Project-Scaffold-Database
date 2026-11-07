@@ -1,10 +1,10 @@
-// VERSION 1.6.1  (bump here and on the var VERSION line below)
+// VERSION 1.6.6  (bump here and on the var VERSION line below)
 /**
  * EcoOils Mentari — Scaffold Inspection Database
  * Backend v1.0.0 · Google Apps Script bound to the Google Sheet.
  * Setup: see SETUP.md. Run setup() once, then deploy as a Web App.
  */
-var VERSION = '1.6.1';
+var VERSION = '1.6.6';
 var ADMIN_EMAIL = 'YOUR_EMAIL@gmail.com';   // first admin (can log in with an emailed code)
 var ADMIN_NAME = 'Iggy';
 var TZ = Session.getScriptTimeZone() || 'Asia/Jakarta';
@@ -268,6 +268,16 @@ function saveImage(folderName, dataUrl, fileName) {
   if (!m) throw new Error('Invalid photo.');
   if (m[2].length > 2400000) throw new Error('Photo too large. Retake at lower resolution.');
   var blob = Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], fileName);
+  return folderFor(folderName).createFile(blob).getId();
+}
+
+// v1.6.6: certificates may be JPG, PNG or PDF (PDF up to about 4.5 MB)
+function saveDoc(folderName, dataUrl, baseName) {
+  var m = /^data:(image\/jpeg|image\/png|application\/pdf);base64,(.+)$/.exec(String(dataUrl || ''));
+  if (!m) throw new Error('Certificate must be a JPG, PNG or PDF file.');
+  if (m[2].length > 6400000) throw new Error('File too large (max about 4.5 MB). Use a smaller file.');
+  var ext = m[1] === 'application/pdf' ? '.pdf' : m[1] === 'image/png' ? '.png' : '.jpg';
+  var blob = Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], String(baseName).replace(/\.[A-Za-z0-9]+$/, '') + ext);
   return folderFor(folderName).createFile(blob).getId();
 }
 
@@ -554,7 +564,7 @@ function applyExtras(o, photos) {
   if (!Array.isArray(photos) || !photos.length) return;
   var list = extraIds(o);
   if (list.length + photos.length > 12) throw new Error('At most 12 extra photos per record.');
-  photos.forEach(function (d) { list.push(saveImage('_certificates', d, o.id + '_extra_' + today() + '_' + (list.length + 1) + '.jpg')); });
+  photos.forEach(function (d) { list.push(saveDoc('_certificates', d, o.id + '_extra_' + today() + '_' + (list.length + 1) + '.jpg')); });
   o.extraPhotoIds = JSON.stringify(list);
 }
 
@@ -998,7 +1008,7 @@ function saveSupervisorInner(u, p) {
   o.certType = String(p.certType || '').trim(); o.certNo = certNo; o.issueDate = p.issueDate || '';
   o.expiryDate = p.expiryDate; o.approval = approval; o.notes = String(p.notes || '').slice(0, 300); o.updatedAt = t;
   if (!p.fromImport && !p.certPhoto && !o.certPhotoId) throw new Error('Upload the photo of the certificate.');
-  if (p.certPhoto) o.certPhotoId = saveImage('_certificates', p.certPhoto, o.id + '_' + today() + '.jpg');
+  if (p.certPhoto) o.certPhotoId = saveDoc('_certificates', p.certPhoto, o.id + '_' + today() + '.jpg');
   applyExtras(o, p.extraPhotos);
   o.locked = '1'; o.verifiedBy = u.email; o.verifiedAt = t;
   if (ex) writeRow('Supervisors', ex._row, o); else appendRow('Supervisors', o);
@@ -1070,7 +1080,7 @@ function saveCrewInner(u, p) {
   o.issueDate = issue; o.expiryDate = expiry; o.approval = p.approval === 'Suspended' ? 'Suspended' : 'Approved';
   o.notes = String(p.notes || '').slice(0, 300); o.updatedAt = t;
   if (p.photo) o.photoId = saveImage('_scaffolders', p.photo, o.id + '_photo_' + today() + '.jpg');
-  if (p.certPhoto) o.certPhotoId = saveImage('_certificates', p.certPhoto, o.id + '_cert_' + today() + '.jpg');
+  if (p.certPhoto) o.certPhotoId = saveDoc('_certificates', p.certPhoto, o.id + '_cert_' + today() + '.jpg');
   applyExtras(o, p.extraPhotos);
   o.locked = '1'; o.verifiedBy = u.email; o.verifiedAt = t;
   if (ex) writeRow('Scaffolders', ex._row, o); else appendRow('Scaffolders', o);
@@ -1198,7 +1208,7 @@ function saveInspectorInner(u, p) {
   o.certType = String(p.certType || '').trim(); o.certNo = certNo; o.issueDate = p.issueDate || '';
   o.expiryDate = p.expiryDate; o.approval = approval; o.notes = String(p.notes || '').slice(0, 300); o.updatedAt = t;
   if (!p.certPhoto && !o.certPhotoId) throw new Error('Upload the photo of the certificate.');
-  if (p.certPhoto) o.certPhotoId = saveImage('_certificates', p.certPhoto, o.id + '_' + today() + '.jpg');
+  if (p.certPhoto) o.certPhotoId = saveDoc('_certificates', p.certPhoto, o.id + '_' + today() + '.jpg');
   applyExtras(o, p.extraPhotos);
   o.locked = '1'; o.verifiedBy = u.email; o.verifiedAt = t;
   if (ex) writeRow('Inspectors', ex._row, o); else appendRow('Inspectors', o);
@@ -1229,7 +1239,7 @@ function addCertPhotos(u, p) {
     if (!photos.length) throw new Error('Choose at least one photo.');
     var list = extraIds(r);
     if (list.length + photos.length > 12) throw new Error('At most 12 extra photos per record.');
-    photos.forEach(function (d) { list.push(saveImage('_certificates', d, r.id + '_extra_' + today() + '_' + (list.length + 1) + '.jpg')); });
+    photos.forEach(function (d) { list.push(saveDoc('_certificates', d, r.id + '_extra_' + today() + '_' + (list.length + 1) + '.jpg')); });
     r.extraPhotoIds = JSON.stringify(list);
     r.updatedAt = today() + ' ' + nowTime();
     writeRow(n, r._row, r);
